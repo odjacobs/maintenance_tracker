@@ -1,5 +1,5 @@
 :root {
-    --background: #aaa;
+    --background: #111;
     --gray: #444;
     --gray-dark: #333;
     --gray-light: #555;
@@ -16,6 +16,7 @@
 
 a {
     text-decoration: none;
+    cursor: pointer;
 }
 
 body {
@@ -23,6 +24,10 @@ body {
 }
 
 header {
+    position: sticky;
+    top: 0;
+    left: 0;
+
     display: flex;
     justify-content: center;
     align-items: baseline;
@@ -51,12 +56,18 @@ x-item {
     width: 100%;
 }
 
-x-item:nth-child(even) {
+x-item:nth-child(odd) {
     --background: var(--gray-dark);
 }
 
 #title {
     font-size: max(2vw, 16pt);
+}
+
+#save-changes {
+    position: absolute;
+    right: 1rem;
+    top: calc(50% - .5rem);
 }
 
 #version {
@@ -68,6 +79,8 @@ x-item:nth-child(even) {
     display: flex;
     flex-direction: column;
     align-items: center;
+
+    background-color: var(--background);
 }
 
 .item-section p {
@@ -75,5 +88,5 @@ x-item:nth-child(even) {
 
     font-size: 1.5rem;
     font-weight: bold;
-    color: var(--gray-dark);
+    color: var(--font);
 }
