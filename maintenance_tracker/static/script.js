@@ -126,7 +126,7 @@ class Item extends HTMLElement {
         optionOther.value = "Other";
         optionOther.innerHTML = "Other";
 
-        statusSelect.onchange = (o) => this.setStatusDescription(statusSelect, o.target.value);
+        statusSelect.onchange = (o) => this.setStatusDescription(statusSelect, o.target.value, false);
         Object.assign(statusSelect.style, statusSelectStyle);
 
         const lblRepairCost = statusDetails.appendChild(
@@ -139,10 +139,12 @@ class Item extends HTMLElement {
             document.createElement("input")
         );
         repairCostInput.value = this.repairCost;
+        repairCostInput.oninput = () => { this.changed = true };
 
         // maintenance notes
         const note = wrapper.appendChild(document.createElement("textarea"));
         note.textContent = this.innerHTML.trim();
+        note.oninput = () => { this.changed = true };
         Object.assign(note.style, noteStyle);
 
         this.shadowRoot.append(wrapper);
@@ -160,7 +162,7 @@ class Item extends HTMLElement {
         this.setStatusDotColor(statusDot);
     }
 
-    setStatusDescription(selectElement, value) {
+    setStatusDescription(selectElement, value, auto = true) {
         let optionExists = false
         for (const option of selectElement.options) {
             if (option.value == value) optionExists = true;
@@ -174,7 +176,8 @@ class Item extends HTMLElement {
 
         selectElement.value = value;
         this.statusDescription = selectElement.value;
-        this.changed = true;
+
+        if (!auto) this.changed = true;
     }
 
     setStatusDotColor(statusDot) {
@@ -197,5 +200,19 @@ class Item extends HTMLElement {
         return color;
     }
 }
+
+function collect_changes() {
+    changed_items = [];
+    items.forEach((item) => {
+        if (item.changed) changed_items.push(item);
+    });
+
+    console.log(changed_items);
+    return changed_items;
+}
+
+const items = Array.from(document.getElementsByTagName("x-item"));
+
+document.getElementById("save-changes").onclick = collect_changes;
 
 window.customElements.define("x-item", Item);
