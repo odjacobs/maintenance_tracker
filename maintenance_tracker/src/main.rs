@@ -5,6 +5,7 @@ use rocket::fs::{relative, FileServer};
 use rocket_dyn_templates::Template;
 use serde::Deserialize;
 
+use std::cmp::{Ordering::Equal, PartialEq, PartialOrd};
 use std::collections::HashMap;
 use std::fs;
 
@@ -29,17 +30,19 @@ impl From<HashMap<String, Vec<Item>>> for Data {
             sections.push(Section { title: k, items: v })
         }
 
+        sections.sort_by(|a, b| a.partial_cmp(b).unwrap_or(Equal));
+
         Data { sections: sections }
     }
 }
 
-#[derive(serde::Serialize, Deserialize, Debug)]
+#[derive(serde::Serialize, Deserialize, Debug, PartialEq, PartialOrd)]
 struct Section {
     title: String,
     items: Vec<Item>,
 }
 
-#[derive(serde::Serialize, Deserialize, Debug)]
+#[derive(serde::Serialize, Deserialize, Debug, PartialEq, PartialOrd)]
 struct Item {
     title: String,
     cost: f32,
