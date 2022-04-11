@@ -2,8 +2,8 @@
 extern crate rocket;
 
 use rocket::fs::{relative, FileServer};
+use rocket::serde::{json::Json, Deserialize};
 use rocket_dyn_templates::Template;
-use serde::Deserialize;
 
 use std::cmp::{Ordering::Equal, PartialEq, PartialOrd};
 use std::collections::HashMap;
@@ -46,8 +46,8 @@ struct Section {
 struct Item {
     title: String,
     cost: f32,
-    note: String,
-    statdesc: String,
+    note: Option<String>,
+    statdesc: Option<String>,
     status: u8,
 }
 
@@ -83,10 +83,21 @@ fn index() -> Template {
     Template::render("base", &context)
 }
 
+#[post("/", format = "json", data = "<changed_items>")]
+fn save_changes(changed_items: Json<Vec<Item>>) -> String {
+    let mut res: Vec<String> = Vec::new();
+    for item in changed_items.iter() {
+        res.push(format!("{:?}", item));
+        println!("{:?}", item);
+    }
+
+    format!("{:#?}", res)
+}
+
 #[launch]
 fn rocket() -> _ {
     rocket::build()
-        .mount("/", routes![index,])
+        .mount("/", routes![index, save_changes])
         .mount("/static", FileServer::from(relative!("/static")))
         .attach(Template::fairing())
 }

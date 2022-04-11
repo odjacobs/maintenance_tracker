@@ -21,6 +21,7 @@ class Item extends HTMLElement {
 
         // attributes
         this.changed = false;
+        this.note = this.innerHTML.length > 0 ? this.innerHTML : ""
         this.repairCost = this.hasAttribute("cost") ? this.getAttribute("cost") : "0.00";
         this.statusDescription = this.hasAttribute("statdesc") ? this.getAttribute("statdesc") : "OK";
         this.status = this.hasAttribute("status") ? this.getAttribute("status") : "0";
@@ -126,7 +127,7 @@ class Item extends HTMLElement {
         optionOther.value = "Other";
         optionOther.innerHTML = "Other";
 
-        statusSelect.onchange = (o) => this.setStatusDescription(statusSelect, o.target.value);
+        statusSelect.onchange = (o) => this.setStatusDescription(statusSelect, o.target.value, false);
         Object.assign(statusSelect.style, statusSelectStyle);
 
         const lblRepairCost = statusDetails.appendChild(
@@ -139,10 +140,12 @@ class Item extends HTMLElement {
             document.createElement("input")
         );
         repairCostInput.value = this.repairCost;
+        repairCostInput.oninput = () => this.setRepairCost(repairCostInput);
 
         // maintenance notes
         const note = wrapper.appendChild(document.createElement("textarea"));
         note.textContent = this.innerHTML.trim();
+        note.oninput = () => this.setNoteContent(note);
         Object.assign(note.style, noteStyle);
 
         this.shadowRoot.append(wrapper);
@@ -160,7 +163,17 @@ class Item extends HTMLElement {
         this.setStatusDotColor(statusDot);
     }
 
-    setStatusDescription(selectElement, value) {
+    setNoteContent(textareaElement) {
+        this.noteContent = textareaElement.value;
+        this.changed = true;
+    }
+
+    setRepairCost(inputElement) {
+        this.repairCost = inputElement.value;
+        this.changed = true;
+    }
+
+    setStatusDescription(selectElement, value, auto = true) {
         let optionExists = false
         for (const option of selectElement.options) {
             if (option.value == value) optionExists = true;
@@ -174,7 +187,8 @@ class Item extends HTMLElement {
 
         selectElement.value = value;
         this.statusDescription = selectElement.value;
-        this.changed = true;
+
+        if (!auto) this.changed = true;
     }
 
     setStatusDotColor(statusDot) {
@@ -198,4 +212,33 @@ class Item extends HTMLElement {
     }
 }
 
+function collect_changes() {
+    let changed_items = [];
+    items.forEach((item) => {
+        // if (item.changed) changed_items.push(item);
+        if (item.changed) changed_items.push({
+            "cost": parseInt(item.repairCost),
+            "note": item.noteContent,
+            "statdesc": item.statusDescription,
+            "status": parseInt(item.status),
+            "title": item.title,
+        });
+    });
+
+    console.log(changed_items);
+
+    let xhr = new XMLHttpRequest();
+    xhr.open("POST", "/");
+    xhr.setRequestHeader("Accept", "application/json");
+    xhr.setRequestHeader("Content-Type", "application/json");
+
+    xhr.onload = () => console.log(xhr.response);
+
+    xhr.send(JSON.stringify(changed_items));
+}
+
+// define custom x-item HTMLElement
+const items = Array.from(document.getElementsByTagName("x-item"));
 window.customElements.define("x-item", Item);
+
+document.getElementById("save-changes").onclick = collect_changes;
