@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ app_title }}</title>
+
+    <link rel="stylesheet" href="../static/main.css">
+</head>
+
+<body>
+    <header>
+        <a href="/">
+            <p id="title">{{ app_title }}</p>
+        </a>
+        <p id="version">{{ app_version }}</p>
+
+        <a id="save-changes">Save Changes</a>
+    </header>
+
+    {% for index, item in items %}
+    <x-item id="{{ item.id }}" title="{{ item.title }}" category="{{ item.category_id }}" status="{{ item.status }}" {%
+        if item.statdesc %} statdesc="{{ item.statdesc }}" {% endif %} cost="{{ item.cost }}">
+        {{ item.note }}
+    </x-item>
+    {% endfor %}
+
+    <script src="static/script.js"></script>
+</body>
+
+</html>

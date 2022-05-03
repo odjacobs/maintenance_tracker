@@ -3,10 +3,11 @@ class Item extends HTMLElement {
      * Custom HTMLElement for maintenance items.
      * 
      * Syntax:
-     *     <x-item title="ITEM_NAME" **attributes> NOTE_CONTENT </x-item>
+     *     <x-item id="ITEM_ID" title="ITEM_NAME" **attributes> NOTE_CONTENT </x-item>
      * 
      * Attributes:
-     * - title <String
+     * - id <Number>
+     * - title <String>
      * - cost <Optional[Number]> [DEFAULT: 0.00]
      * - status <Optional[String]> [DEFAULT: "0"]
      * - statdesc <Optional[String]> [DEFAULT: ""]
@@ -15,12 +16,18 @@ class Item extends HTMLElement {
         super();
 
         // required attributes
-        if (!this.hasAttribute("title")) return;
+        if (
+            !this.hasAttribute("title") ||
+            !this.hasAttribute("id") ||
+            !this.hasAttribute("category")
+        ) return;
 
         this.attachShadow({ mode: "open" });
 
         // attributes
         this.changed = false;
+        this.id = this.getAttribute("id");
+        this.categoryID = this.getAttribute("categoryID");
         this.note = this.innerHTML.length > 0 ? this.innerHTML : ""
         this.repairCost = this.hasAttribute("cost") ? this.getAttribute("cost") : "0.00";
         this.statusDescription = this.hasAttribute("statdesc") ? this.getAttribute("statdesc") : "OK";
@@ -97,24 +104,25 @@ class Item extends HTMLElement {
         Object.assign(statusDot.style, statusDotStyle);
         this.setStatusDotColor(statusDot);
 
-        // item status details (description, cost)
+        // item status details (description selector, cost input)
         const statusDetails = wrapper.appendChild(document.createElement("span"));
         Object.assign(statusDetails.style, statusDetailsStyle);
 
-        const statusSelect = statusDetails.appendChild(
-            document.createElement("select")
-        );
+        const statusSelect = statusDetails.appendChild(document.createElement("select"));
 
         // add options
         this.setStatusDescription(statusSelect, this.statusDescription);
 
         if (this.statusDescription != "OK") {
+            // if current status is not `OK`, add `OK` as an option to the selector
             let optionOk = statusSelect.appendChild(document.createElement("option"));
             optionOk.value = "OK";
             optionOk.innerHTML = "OK";
         }
 
         if (this.hasAttribute("options")) {
+            // selector options are passed to the item as a string
+            // options are separated by semicolons
             let option_list = this.getAttribute("options").split(";");
             for (let option of option_list) {
                 let o = statusSelect.appendChild(document.createElement("option"));
@@ -123,6 +131,7 @@ class Item extends HTMLElement {
             }
         }
 
+        // TODO: other is an option that requires the `note` field to be filled out
         let optionOther = statusSelect.appendChild(document.createElement("option"));
         optionOther.value = "Other";
         optionOther.innerHTML = "Other";
@@ -130,12 +139,14 @@ class Item extends HTMLElement {
         statusSelect.onchange = (o) => this.setStatusDescription(statusSelect, o.target.value, false);
         Object.assign(statusSelect.style, statusSelectStyle);
 
+        // label that displays text "Repair Cost:"
         const lblRepairCost = statusDetails.appendChild(
             document.createElement("p")
         );
         lblRepairCost.innerHTML = "Repair Cost:";
         Object.assign(lblRepairCost.style, lblRepairCostStyle);
 
+        // input for this.repairCost
         const repairCostInput = statusDetails.appendChild(
             document.createElement("input")
         );
@@ -152,6 +163,8 @@ class Item extends HTMLElement {
     }
 
     nextStatusDotColor(event) {
+        // cycle through status number (0-2) and set color accordingly
+        // see `setStatusDotColor()` for color-change logic
         let intStatus = parseInt(this.status);
         let statusDot = event.target;
 
@@ -174,11 +187,16 @@ class Item extends HTMLElement {
     }
 
     setStatusDescription(selectElement, value, auto = true) {
+        // set this.statusDescription to `value`
+        // called automatically when this.statusDescription is empty
+
+        // check whether `value` currently exists within the selector
         let optionExists = false
         for (const option of selectElement.options) {
             if (option.value == value) optionExists = true;
         }
 
+        // if `value` does not exist, append it to the selector
         if (!optionExists) {
             let option = selectElement.appendChild(document.createElement("option"));
             option.value = value;
@@ -188,10 +206,12 @@ class Item extends HTMLElement {
         selectElement.value = value;
         this.statusDescription = selectElement.value;
 
+        // if this change was done by the user, set this.changed to true
         if (!auto) this.changed = true;
     }
 
     setStatusDotColor(statusDot) {
+        // cycle between green, yellow, and red status indicator colors
         let color = "";
         switch (this.status) {
             case "1":
@@ -213,32 +233,47 @@ class Item extends HTMLElement {
 }
 
 function collect_changes() {
+    // get all changed items and return them in Object form
     let changed_items = [];
     items.forEach((item) => {
-        // if (item.changed) changed_items.push(item);
         if (item.changed) changed_items.push({
-            "cost": parseInt(item.repairCost),
-            "note": item.noteContent,
-            "statdesc": item.statusDescription,
-            "status": parseInt(item.status),
+            "id": parseInt(item.id),
             "title": item.title,
+            "category_id": item.categoryID,
+            "status": parseInt(item.status),
+            "statdesc": item.statusDescription,
+            "cost": parseInt(item.repairCost.replace(".", "")),
+            "note": item.noteContent,
         });
     });
 
-    console.log(changed_items);
+    return changed_items;
+}
 
+function post_changes(items) {
+    // send data to backend via POST request
     let xhr = new XMLHttpRequest();
     xhr.open("POST", "/");
     xhr.setRequestHeader("Accept", "application/json");
     xhr.setRequestHeader("Content-Type", "application/json");
 
+    // log response to the console
     xhr.onload = () => console.log(xhr.response);
 
-    xhr.send(JSON.stringify(changed_items));
+    xhr.send(JSON.stringify(items));
 }
 
+function save_changes() {
+    // get changes as an array of Objects
+    let changed_items = collect_changes();
+    console.log(changed_items);
+
+    // send data to backend via POST request
+    post_changes(changed_items);
+
+}
 // define custom x-item HTMLElement
 const items = Array.from(document.getElementsByTagName("x-item"));
 window.customElements.define("x-item", Item);
 
-document.getElementById("save-changes").onclick = collect_changes;
+document.getElementById("save-changes").onclick = save_changes;
