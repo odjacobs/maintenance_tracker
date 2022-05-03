@@ -29,11 +29,12 @@ header {
     left: 0;
 
     display: flex;
-    justify-content: center;
-    align-items: baseline;
-    gap: .5rem;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    gap: .75rem;
 
-    padding: .25rem 0;
+    padding: .5rem 1rem;
     background: var(--gray);
 
     border-bottom: solid 2px var(--gray-light);
@@ -61,17 +62,33 @@ x-item:nth-child(odd) {
 }
 
 #title {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
     font-size: max(2vw, 16pt);
 }
 
+#title img {
+    width: max(3vw, 50px);
+    height: auto;
+}
+
+#title-block {
+    display: flex;
+    gap: .5rem;
+}
+
 #save-changes {
-    position: absolute;
+    /* position: absolute;
     right: 1rem;
-    top: calc(50% - .5rem);
+    top: calc(50% - .5rem); */
+
+    display: block;
 }
 
 #version {
     font-size: .9rem;
+    transform: translateY(50%);
 }
 
 

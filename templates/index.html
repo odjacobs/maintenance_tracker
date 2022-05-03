@@ -7,14 +7,20 @@
     <title>{{ app_title }}</title>
 
     <link rel="stylesheet" href="../static/main.css">
+    <link rel="shortcut icon" href="../static/favicon.ico" type="image/x-icon">
 </head>
 
 <body>
     <header>
-        <a href="/">
-            <p id="title">{{ app_title }}</p>
-        </a>
-        <p id="version">{{ app_version }}</p>
+        <div id="title-block">
+            <a href="/">
+                <p id="title">
+                    <img src="../static/maintenance_tracker_logo.png" alt="[app logo]">
+                    {{ app_title }}
+                </p>
+            </a>
+            <p id="version">{{ app_version }}</p>
+        </div>
 
         <a id="save-changes">Save Changes</a>
     </header>
