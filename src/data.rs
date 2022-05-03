@@ -6,8 +6,8 @@ pub mod constants {
 }
 
 pub mod local {
-    /// client-specific information used to
-    /// run the initial setup process
+    /// Client-specific information used to
+    /// run the initial setup process.
     use std::collections::HashMap;
 
     // query that creates database tables
@@ -32,7 +32,7 @@ pub mod local {
         ";
 
     pub fn categories() -> Vec<&'static str> {
-        /// returns collection of category titles
+        /// Returns collection of category titles
         vec![
             "2-AXIS LATHE",
             "3-AXIS MILL",
@@ -60,7 +60,7 @@ pub mod local {
     }
 
     pub fn items() -> HashMap<u32, Vec<String>> {
-        /// returns a HashMap<K, V> where...
+        /// Returns a HashMap<K, V> where...
         /// K: category ID (numeric)
         /// V: collection of items in category K
         HashMap::from([

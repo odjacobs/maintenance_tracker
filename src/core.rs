@@ -9,12 +9,14 @@ pub mod structs {
 
     #[derive(Debug, PartialEq, Eq)]
     pub struct Category {
+        /// Category for sorting items.
         pub id: u32,
         pub title: String,
     }
 
     impl FromRow for Category {
         fn from_row_opt(row: Row) -> Result<Category, FromRowError> {
+            /// Convert a row of data into a Category.
             let mut row = row;
 
             let result = Category {
@@ -28,6 +30,7 @@ pub mod structs {
 
     #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
     pub struct Item {
+        /// An item in the database.
         pub id: Option<u32>,
         pub title: String,
         pub category_id: u32,
@@ -55,6 +58,7 @@ pub mod structs {
 
     impl FromRow for Item {
         fn from_row_opt(row: Row) -> Result<Item, FromRowError> {
+            /// Convert a row of data into an Item.
             let mut row = row;
 
             let result = Item {
@@ -80,7 +84,10 @@ pub mod functions {
 
     use crate::structs;
 
+    // TODO: type checking & error handling
     pub fn parse_json_string(req: String) -> HashMap<u32, structs::Item> {
+        /// Takes JSON data from a POST request and converts it
+        /// into a collection of items to update in the database.
         let mut result: HashMap<u32, structs::Item> = HashMap::new();
 
         let items: Vec<structs::Item> = serde_json::from_str(&req).unwrap();

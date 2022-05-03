@@ -19,6 +19,10 @@
         <a id="save-changes">Save Changes</a>
     </header>
 
+    {#
+    Loop through database items and add them to the page.
+    This currently doesn't organize the items by category.
+    #}
     {% for index, item in items %}
     <x-item id="{{ item.id }}" title="{{ item.title }}" category="{{ item.category_id }}" status="{{ item.status }}" {%
         if item.statdesc %} statdesc="{{ item.statdesc }}" {% endif %} cost="{{ item.cost }}">

@@ -8,11 +8,13 @@ pub mod database {
     use crate::core::structs::{Category, Item};
 
     pub fn collect_categories(conn: &mut PooledConn) -> Vec<Category> {
+        /// Get all categories from the database.
         conn.query("SELECT * FROM category").unwrap()
     }
 
     pub fn collect_items(conn: &mut PooledConn) -> BTreeMap<u32, Item> {
-        /// get collection of items in database
+        /// Get all items from the database.
+        /// Returns a BTreeMap to preserve order of insertion.
         let items: Vec<Item> = conn.query("SELECT * FROM item").unwrap();
         let mut result: BTreeMap<u32, Item> = BTreeMap::new();
 
@@ -24,7 +26,7 @@ pub mod database {
     }
 
     pub fn connect(url: String) -> Result<mysql::PooledConn> {
-        /// get options from url and create a pooled connection
+        /// Get options from url and create a pooled connection
         let opts = Opts::from_url(&url)?;
         let pool = Pool::new(opts)?;
 
@@ -32,12 +34,12 @@ pub mod database {
     }
 
     pub fn insert_category(conn: &mut PooledConn, title: &str) -> Result<()> {
-        /// insert a category into the database
+        /// Insert a category into the database.
         conn.query_drop(format!("INSERT INTO category (title) VALUES ('{}')", title))
     }
 
     pub fn insert_item(conn: &mut PooledConn, item: &mut Item) -> Result<()> {
-        /// insert an item into the database
+        /// Insert an item into the database.
         conn.exec_drop(
             r"INSERT INTO item (title, category_id, cost, note, status, statdesc, hidden)
             VALUES (
@@ -72,7 +74,7 @@ pub mod database {
     }
 
     pub fn update_item(conn: &mut PooledConn, item: &Item) -> Result<()> {
-        /// update an item in the database
+        /// Update an item in the database.
         conn.exec_drop(
             r"
                 UPDATE item

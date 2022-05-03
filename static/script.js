@@ -251,7 +251,7 @@ function collect_changes() {
 }
 
 function post_changes(items) {
-    // send data to backend via POST request
+    // send JSON data to backend via POST request
     let xhr = new XMLHttpRequest();
     xhr.open("POST", "/");
     xhr.setRequestHeader("Accept", "application/json");
@@ -272,6 +272,7 @@ function save_changes() {
     post_changes(changed_items);
 
 }
+
 // define custom x-item HTMLElement
 const items = Array.from(document.getElementsByTagName("x-item"));
 window.customElements.define("x-item", Item);

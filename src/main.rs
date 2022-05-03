@@ -18,6 +18,7 @@ use db::database;
 
 #[derive(Clone, Debug)]
 struct State {
+    /// Container for simple runtime data.
     app_title: Option<String>,
     app_version: Option<String>,
     tera: Tera,
@@ -34,6 +35,7 @@ impl State {
 }
 
 fn get_conn() -> PooledConn {
+    /// Establish a database connection from environment variables.
     database::connect(format!(
         "mysql://{}:{}@{}/{}",
         dotenv!("USER"),
@@ -52,19 +54,22 @@ async fn main() -> Result<()> {
 
     let mut conn = get_conn();
 
+    // we're using tera for templating
     let mut tera = Tera::new("templates/**/*").expect("Error parsing templates directory.");
     tera.autoescape_on(vec!["html"]);
 
     let mut state = State::new(tera);
     let mut app = tide::with_state(state);
+
+    // get existing database items
     let mut items = database::collect_items(&mut conn);
 
     app.at("/static").serve_dir("./static").unwrap();
 
-    // index
+    // index page
     app.at("/")
         .get(|req: tide::Request<State>| async move {
-            /// Get information from the database
+            /// Get information from the database.
             let tera = req.state().tera.clone();
 
             tera.render_response(
@@ -76,16 +81,19 @@ async fn main() -> Result<()> {
                 },
             )
         })
+        // TODO: type checking & error handling
         .post(|mut req: tide::Request<State>| async move {
             /// Update information in the database.
             let req_string = req.body_string().await?;
 
+            // good ol' print debugging
             println!("{:?}", req_string);
             println!("{:#?}", functions::parse_json_string(req_string));
 
             Ok("Ok")
         });
 
+    // run the application
     app.listen(format!("127.0.0.1:{}", dotenv!("CLIENT_PORT")))
         .await?;
 
