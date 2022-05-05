@@ -38,7 +38,7 @@ pub mod structs {
         pub note: Option<String>,
         pub status: u8,
         pub statdesc: Option<String>,
-        pub hidden: bool,
+        pub visible: bool,
     }
 
     impl Item {
@@ -51,7 +51,7 @@ pub mod structs {
                 note: None,
                 status: 0,
                 statdesc: None,
-                hidden: false,
+                visible: false,
             }
         }
     }
@@ -69,7 +69,7 @@ pub mod structs {
                 note: row.take("note").unwrap(),
                 status: row.take("status").unwrap(),
                 statdesc: row.take("statdesc").unwrap(),
-                hidden: row.take("hidden").unwrap(),
+                visible: row.take("visible").unwrap(),
             };
 
             Ok(result)

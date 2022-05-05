@@ -3,6 +3,8 @@
 #[macro_use]
 extern crate dotenv_codegen;
 
+use std::collections::BTreeMap;
+
 use dotenv::dotenv;
 use mysql::{prelude::*, *};
 use tera::Tera;
@@ -85,12 +87,13 @@ async fn main() -> Result<()> {
         .post(|mut req: tide::Request<State>| async move {
             /// Update information in the database.
             let req_string = req.body_string().await?;
+            let items = functions::parse_json_string(req_string);
 
-            // good ol' print debugging
-            println!("{:?}", req_string);
-            println!("{:#?}", functions::parse_json_string(req_string));
+            for (id, item) in items {
+                database::update_item(&mut get_conn(), &item)?;
+            }
 
-            Ok("Ok")
+            Ok("OK")
         });
 
     // run the application

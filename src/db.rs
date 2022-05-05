@@ -41,7 +41,7 @@ pub mod database {
     pub fn insert_item(conn: &mut PooledConn, item: &mut Item) -> Result<()> {
         /// Insert an item into the database.
         conn.exec_drop(
-            r"INSERT INTO item (title, category_id, cost, note, status, statdesc, hidden)
+            r"INSERT INTO item (title, category_id, cost, note, status, statdesc, visible)
             VALUES (
                 :title,
                 :category_id,
@@ -49,7 +49,7 @@ pub mod database {
                 :note,
                 :status,
                 :statdesc,
-                :hidden
+                :visible
             )",
             params! {
                 "title" => &item.title,
@@ -58,7 +58,7 @@ pub mod database {
                 "note" => &item.note,
                 "status" => item.status,
                 "statdesc" => &item.statdesc,
-                "hidden" => item.hidden,
+                "visible" => item.visible,
             },
         )?;
 
@@ -84,7 +84,7 @@ pub mod database {
                     note = :note,
                     status = :status,
                     statdesc = :statdesc,
-                    hidden = :hidden
+                    visible = :visible
                 WHERE id = :id
             ",
             params! {
@@ -95,7 +95,7 @@ pub mod database {
                 "note" => &item.note,
                 "status" => item.status,
                 "statdesc" => &item.statdesc,
-                "hidden" => item.hidden,
+                "visible" => item.visible,
             },
         )
     }

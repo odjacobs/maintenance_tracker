@@ -8,6 +8,8 @@ class Item extends HTMLElement {
      * Attributes:
      * - id <Number>
      * - title <String>
+     * - categoryID <Number>
+     * - visible <bool>
      * - cost <Optional[Number]> [DEFAULT: 0.00]
      * - status <Optional[String]> [DEFAULT: "0"]
      * - statdesc <Optional[String]> [DEFAULT: ""]
@@ -19,7 +21,7 @@ class Item extends HTMLElement {
         if (
             !this.hasAttribute("title") ||
             !this.hasAttribute("id") ||
-            !this.hasAttribute("category")
+            !this.hasAttribute("categoryID")
         ) return;
 
         this.attachShadow({ mode: "open" });
@@ -28,10 +30,13 @@ class Item extends HTMLElement {
         this.changed = false;
         this.id = this.getAttribute("id");
         this.categoryID = this.getAttribute("categoryID");
-        this.note = this.innerHTML.length > 0 ? this.innerHTML : ""
-        this.repairCost = this.hasAttribute("cost") ? this.getAttribute("cost") : "0.00";
-        this.statusDescription = this.hasAttribute("statdesc") ? this.getAttribute("statdesc") : "OK";
-        this.status = this.hasAttribute("status") ? this.getAttribute("status") : "0";
+        this.note = this.innerHTML || ""
+
+        this.repairCost = this.getAttribute("cost") || "0.00";
+
+        this.statusDescription = this.getAttribute("statdesc") || "OK";
+        this.status = this.getAttribute("status") || "0";
+        this.visible = this.getAttribute("visible") || "false";
 
         // constants
         this.LAST_NOTE = this.innerHTML;
@@ -239,11 +244,12 @@ function collect_changes() {
         if (item.changed) changed_items.push({
             "id": parseInt(item.id),
             "title": item.title,
-            "category_id": item.categoryID,
+            "category_id": parseInt(item.categoryID),
             "status": parseInt(item.status),
             "statdesc": item.statusDescription,
             "cost": parseInt(item.repairCost.replace(".", "")),
             "note": item.noteContent,
+            "visible": item.visible == "true" ? true : false,
         });
     });
 
@@ -270,7 +276,6 @@ function save_changes() {
 
     // send data to backend via POST request
     post_changes(changed_items);
-
 }
 
 // define custom x-item HTMLElement

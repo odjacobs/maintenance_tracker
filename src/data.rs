@@ -26,7 +26,7 @@ pub mod local {
             note TEXT,
             status TINYINT,
             statdesc VARCHAR(255),
-            hidden BOOL,
+            visible BOOL,
             PRIMARY KEY (id)
         );
         ";
