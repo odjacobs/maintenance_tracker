@@ -30,7 +30,8 @@ pub mod structs {
 
     #[derive(Serialize, Deserialize, Clone)]
     pub struct IItem {
-        /// Intermediate Item interface
+        /// Intermediate Item interface, a flattened
+        /// Item with all the values for ItemDetails.
         pub id: Option<u32>,
         pub title: String,
         pub category_id: u32,
@@ -78,6 +79,7 @@ pub mod structs {
 
     #[derive(Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
     pub struct ItemDetails {
+        /// Mutable details about an Item.
         pub cost: Option<u32>,
         pub note: Option<String>,
         pub statdesc: Option<String>,
@@ -112,9 +114,18 @@ pub mod functions {
 
     pub fn parse_json_string(req: String) -> HashMap<u32, structs::Item> {
         /// Takes JSON data from a POST request and converts it
-        /// into a collection of items to update in the database.
+        /// into a HashMap of items to update in the database.
         let mut result: HashMap<u32, structs::Item> = HashMap::new();
 
+        /** JSON values are brought in as a flat value map, which can't be
+         * directly turned into an Item because they require a nested struct
+         * (ItemDetails) which is used to create an Entry.
+         *
+         * To make the conversion work, create a collection of IItem structs, which
+         * contain all the necessary values to create both an Item and ItemDetails.
+         * Next, iterate through that collection, breaking down each IItem and combining
+         * the resulting structs into an Item that can be inserted into the result.
+         */
         let mut iitems: Vec<structs::IItem> = serde_json::from_str(&req).unwrap();
         for iitem in iitems.iter_mut() {
             let details = structs::ItemDetails {

@@ -17,14 +17,15 @@ pub mod database {
         /// Returns a BTreeMap to preserve order of insertion.
         let mut items: Vec<Item> = conn.query("SELECT * FROM item").unwrap();
 
+        // get vector of most recent entries for each item
         let mut details_list: Vec<ItemDetails> = Vec::new();
         for item in items.iter() {
             let details: ItemDetails = conn
                 .exec_first(
                     r"
-                SELECT cost, note, statdesc, status, visible
-                FROM entry WHERE item_id = :item_id ORDER BY id DESC
-                ",
+                    SELECT cost, note, statdesc, status, visible
+                    FROM entry WHERE item_id = :item_id ORDER BY id DESC
+                    ",
                     params! {
                         "item_id" => item.id,
                     },
@@ -34,7 +35,6 @@ pub mod database {
 
             details_list.push(details);
         }
-        // conn.query("SELECT cost, note, statdesc, status, visible FROM entry").unwrap();
 
         let mut result: BTreeMap<u32, Item> = BTreeMap::new();
         for (item, details) in items.iter_mut().zip(details_list.iter()) {
@@ -53,11 +53,13 @@ pub mod database {
         Ok(pool.get_conn()?)
     }
 
+    // TODO: Add GUI options for this function which is currently unused.
     pub fn insert_category(conn: &mut PooledConn, title: &str) -> Result<()> {
         /// Insert a category into the database.
         conn.query_drop(format!("INSERT INTO category (title) VALUES ('{}')", title))
     }
 
+    // TODO: Add GUI options for this function which is currently unused.
     pub fn insert_item(conn: &mut PooledConn, item: &mut Item) -> Result<()> {
         /// Insert an item into the database.
         let details = item.details.as_ref().unwrap();
@@ -104,6 +106,7 @@ pub mod database {
 
     pub fn update_item(conn: &mut PooledConn, item: &Item) -> Result<()> {
         /// Update an item in the database.
+        // TODO: Add GUI options for this part which currently does nothing.
         conn.exec_drop(
             r"
             UPDATE item
@@ -118,6 +121,7 @@ pub mod database {
             },
         );
 
+        // create a new entry with updated information
         let details = item.details.as_ref().unwrap();
         conn.exec_drop(
             r"
