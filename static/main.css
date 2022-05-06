@@ -85,10 +85,6 @@ x-item:nth-child(odd) {
 }
 
 #save-changes {
-    /* position: absolute;
-    right: 1rem;
-    top: calc(50% - .5rem); */
-
     display: block;
 }
 
