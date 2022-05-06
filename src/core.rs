@@ -28,20 +28,6 @@ pub mod structs {
         }
     }
 
-    #[derive(Serialize, Deserialize, Clone)]
-    pub struct IItem {
-        /// Intermediate Item interface, a flattened
-        /// Item with all the values for ItemDetails.
-        pub id: Option<u32>,
-        pub title: String,
-        pub category_id: u32,
-        pub cost: u32,
-        pub note: Option<String>,
-        pub statdesc: Option<String>,
-        pub status: u8,
-        pub visible: bool,
-    }
-
     #[derive(Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
     pub struct Item {
         /// An item in the database.
@@ -116,35 +102,10 @@ pub mod functions {
         /// Takes JSON data from a POST request and converts it
         /// into a HashMap of items to update in the database.
         let mut result: HashMap<u32, structs::Item> = HashMap::new();
+        let mut items: Vec<structs::Item> = serde_json::from_str(&req).unwrap();
 
-        /** JSON values are brought in as a flat value map, which can't be
-         * directly turned into an Item because they require a nested struct
-         * (ItemDetails) which is used to create an Entry.
-         *
-         * To make the conversion work, create a collection of IItem structs, which
-         * contain all the necessary values to create both an Item and ItemDetails.
-         * Next, iterate through that collection, breaking down each IItem and combining
-         * the resulting structs into an Item that can be inserted into the result.
-         */
-        let mut iitems: Vec<structs::IItem> = serde_json::from_str(&req).unwrap();
-        for iitem in iitems.iter_mut() {
-            let details = structs::ItemDetails {
-                cost: Some(iitem.cost),
-                note: iitem.note.clone(),
-                statdesc: iitem.statdesc.clone(),
-                status: iitem.status,
-                visible: iitem.visible,
-            };
-
-            result.insert(
-                iitem.id.unwrap(),
-                structs::Item {
-                    id: iitem.id,
-                    title: iitem.title.clone(),
-                    category_id: iitem.category_id,
-                    details: Some(details),
-                },
-            );
+        for item in items.iter() {
+            result.insert(item.id.unwrap(), item.clone());
         }
 
         println!("{:#?}", result);

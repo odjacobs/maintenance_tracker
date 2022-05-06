@@ -248,11 +248,13 @@ function collect_changes() {
             "id": parseInt(item.id),
             "title": item.title,
             "category_id": parseInt(item.categoryID),
-            "status": parseInt(item.status),
-            "statdesc": item.statusDescription,
-            "cost": parseInt(item.repairCost.replace(".", "")),
-            "note": item.noteContent,
-            "visible": item.visible == "true" ? true : false,
+            "details": {
+                "status": parseInt(item.status),
+                "statdesc": item.statusDescription,
+                "cost": parseInt(item.repairCost.replace(".", "")),
+                "note": item.noteContent,
+                "visible": item.visible == "true" ? true : false,
+            },
         });
     });
 

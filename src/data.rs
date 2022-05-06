@@ -29,6 +29,18 @@ pub mod local {
             visible BOOL,
             PRIMARY KEY (id)
         );
+
+        CREATE TABLE IF NOT EXISTS Entry (
+            id INT(10) NOT NULL AUTO_INCREMENT,
+            item_id INT(8) NOT NULL,
+            cost INT,
+            note TEXT,
+            status TINYINT,
+            statdesc VARCHAR(255),
+            visible BOOL,
+            date DATETIME,
+            PRIMARY KEY (id)
+        )
         ";
 
     pub fn categories() -> Vec<&'static str> {
