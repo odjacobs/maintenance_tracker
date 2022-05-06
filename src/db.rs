@@ -5,7 +5,7 @@ pub mod database {
 
     use mysql::{prelude::*, *};
 
-    use crate::core::structs::{Category, Item};
+    use crate::core::structs::{Category, Item, ItemDetails};
 
     pub fn collect_categories(conn: &mut PooledConn) -> Vec<Category> {
         /// Get all categories from the database.
@@ -15,10 +15,30 @@ pub mod database {
     pub fn collect_items(conn: &mut PooledConn) -> BTreeMap<u32, Item> {
         /// Get all items from the database.
         /// Returns a BTreeMap to preserve order of insertion.
-        let items: Vec<Item> = conn.query("SELECT * FROM item").unwrap();
-        let mut result: BTreeMap<u32, Item> = BTreeMap::new();
+        let mut items: Vec<Item> = conn.query("SELECT * FROM item").unwrap();
 
+        let mut details_list: Vec<ItemDetails> = Vec::new();
         for item in items.iter() {
+            let details: ItemDetails = conn
+                .exec_first(
+                    r"
+                SELECT cost, note, statdesc, status, visible
+                FROM entry WHERE item_id = :item_id ORDER BY id DESC
+                ",
+                    params! {
+                        "item_id" => item.id,
+                    },
+                )
+                .unwrap()
+                .unwrap();
+
+            details_list.push(details);
+        }
+        // conn.query("SELECT cost, note, statdesc, status, visible FROM entry").unwrap();
+
+        let mut result: BTreeMap<u32, Item> = BTreeMap::new();
+        for (item, details) in items.iter_mut().zip(details_list.iter()) {
+            item.details = Some(details.clone());
             result.insert(item.id.unwrap(), item.clone());
         }
 
@@ -40,25 +60,34 @@ pub mod database {
 
     pub fn insert_item(conn: &mut PooledConn, item: &mut Item) -> Result<()> {
         /// Insert an item into the database.
+        let details = item.details.as_ref().unwrap();
+
         conn.exec_drop(
-            r"INSERT INTO item (title, category_id, cost, note, status, statdesc, visible)
+            r"INSERT INTO item (title, category_id)
             VALUES (
                 :title,
                 :category_id,
+                :cost
+            );
+            
+            INSERT INTO entry (item_id, cost, note, statdesc, status, visible)
+            VALUES (
+                :item_id,
                 :cost,
                 :note,
-                :status,
                 :statdesc,
+                :status,
                 :visible
             )",
             params! {
                 "title" => &item.title,
                 "category_id" => item.category_id,
-                "cost" => item.cost,
-                "note" => &item.note,
-                "status" => item.status,
-                "statdesc" => &item.statdesc,
-                "visible" => item.visible,
+                "item_id" => item.id,
+                "cost" => details.cost,
+                "note" => &details.note,
+                "statdesc" => &details.statdesc,
+                "status" => details.status,
+                "visible" => details.visible,
             },
         )?;
 
@@ -77,25 +106,38 @@ pub mod database {
         /// Update an item in the database.
         conn.exec_drop(
             r"
-                UPDATE item
-                SET title = :title,
-                    category_id = :category_id,
-                    cost = :cost,
-                    note = :note,
-                    status = :status,
-                    statdesc = :statdesc,
-                    visible = :visible
-                WHERE id = :id
+            UPDATE item
+            SET title = :title,
+            category_id = :category_id
+            WHERE id = :id;
             ",
             params! {
                 "id" => item.id,
                 "title" => &item.title,
                 "category_id" => item.category_id,
-                "cost" => item.cost,
-                "note" => &item.note,
-                "status" => item.status,
-                "statdesc" => &item.statdesc,
-                "visible" => item.visible,
+            },
+        );
+
+        let details = item.details.as_ref().unwrap();
+        conn.exec_drop(
+            r"
+            INSERT INTO entry (item_id, cost, note, statdesc, status, visible)
+            VALUES (
+                :item_id,
+                :cost,
+                :note,
+                :statdesc,
+                :status,
+                :visible
+            );
+            ",
+            params! {
+                "item_id" => item.id,
+                "cost" => details.cost,
+                "note" => &details.note,
+                "statdesc" => &details.statdesc,
+                "status" => details.status,
+                "visible" => details.visible,
             },
         )
     }
