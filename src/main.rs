@@ -86,7 +86,6 @@ async fn main() -> Result<()> {
                 },
             )
         })
-        // TODO: type checking & error handling
         .post(|mut req: tide::Request<State>| async move {
             /// Update information in the database.
             let req_string = req.body_string().await?;

@@ -84,7 +84,6 @@ pub mod functions {
 
     use crate::structs;
 
-    // TODO: type checking & error handling
     pub fn parse_json_string(req: String) -> HashMap<u32, structs::Item> {
         /// Takes JSON data from a POST request and converts it
         /// into a collection of items to update in the database.
