@@ -165,6 +165,9 @@ class Item extends HTMLElement {
         Object.assign(note.style, noteStyle);
 
         this.shadowRoot.append(wrapper);
+        
+        // Append this item to the div with the same category.
+        document.getElementById('cat-' + this.categoryID).appendChild(this);
     }
 
     nextStatusDotColor(event) {
