@@ -108,8 +108,6 @@ pub mod functions {
             result.insert(item.id.unwrap(), item.clone());
         }
 
-        println!("{:#?}", result);
-
         result
     }
 }
