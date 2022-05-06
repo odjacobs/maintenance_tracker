@@ -7,7 +7,7 @@ pub mod structs {
     use mysql::{FromRowError, FromValueError, Row, Value};
     use serde::{Deserialize, Serialize};
 
-    #[derive(Debug, PartialEq, Eq)]
+    #[derive(serde::Serialize, Debug, PartialEq, Eq)]
     pub struct Category {
         /// Category for sorting items.
         pub id: u32,

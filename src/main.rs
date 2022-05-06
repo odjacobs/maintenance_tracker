@@ -74,12 +74,15 @@ async fn main() -> Result<()> {
             /// Get information from the database.
             let tera = req.state().tera.clone();
 
+            let mut c = get_conn();
+
             tera.render_response(
                 "index.html",
                 &context! {
                     "app_title" => constants::APP_TITLE.to_owned(),
                     "app_version" => constants::APP_VERSION.to_owned(),
-                    "items" => database::collect_items(&mut get_conn()),
+                    "categories" => database::collect_categories(&mut c),
+                    "items" => database::collect_items(&mut c),
                 },
             )
         })

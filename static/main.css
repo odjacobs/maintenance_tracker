@@ -23,6 +23,12 @@ body {
     background: var(--background);
 }
 
+h2 {
+    padding: .5rem 0;
+    text-align: center;
+    text-shadow: 0 2px 0 var(--gray-light);
+}
+
 header {
     position: sticky;
     top: 0;
