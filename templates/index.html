@@ -25,22 +25,31 @@
         <a id="save-changes">Save Changes</a>
     </header>
 
+    <button id="top-link" onclick="scrollToTop()">Top &bigtriangleup;</button>
+
+    <details id="toc">
+        <summary>Table of Contents (Quick Links)</summary>
+        {% for category in categories %}
+        <a href="#cat-{{category.id}}">{{ category.title }}</a>
+        {% endfor %}
+    </details>
+
     {# Loop through categories #}
     {% for category in categories %}
     <div id="cat-{{category.id}}">
         <h2>{{ category.title }}</h2>
     </div>
     {% endfor %}*/
-    
+
     {# Loop through items #}
     {% for index, item in items %}
     <x-item id="{{ item.id }}" title="{{ item.title }}" categoryID="{{ item.category_id }}" status="{{ item.status }}"
-            {% if item.statdesc %} statdesc="{{ item.statdesc }}" {% endif %} cost="{{ item.cost }}"
-            visible="{{ item.visible }}">
+        {% if item.statdesc %} statdesc="{{ item.statdesc }}" {% endif %} cost="{{ item.cost }}"
+        visible="{{ item.visible }}">
         {{ item.note }}
     </x-item>
-    {% endfor %}*/
-    
+    {% endfor %}
+
     <script src="static/script.js"></script>
 </body>
 

@@ -165,9 +165,9 @@ class Item extends HTMLElement {
         Object.assign(note.style, noteStyle);
 
         this.shadowRoot.append(wrapper);
-        
+
         // Append this item to the div with the same category.
-        document.getElementById('cat-' + this.categoryID).appendChild(this);
+        document.getElementById("cat-" + this.categoryID).appendChild(this);
     }
 
     nextStatusDotColor(event) {
@@ -279,6 +279,11 @@ function save_changes() {
 
     // send data to backend via POST request
     post_changes(changed_items);
+}
+
+function scrollToTop() {
+    window.scrollTo(0, 0);
+    history.pushState("", document.title, window.location.pathname + window.location.search);
 }
 
 // define custom x-item HTMLElement

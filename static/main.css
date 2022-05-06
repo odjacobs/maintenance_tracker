@@ -1,5 +1,6 @@
 :root {
     --background: #111;
+    --box-shadow: 0 2px 6px #000;
     --gray: #444;
     --gray-dark: #333;
     --gray-light: #555;
@@ -46,6 +47,10 @@ header {
     border-bottom: solid 2px var(--gray-light);
 }
 
+html {
+    scroll-behavior: smooth;
+}
+
 option,
 select {
     color: var(--gray-dark);
@@ -67,6 +72,11 @@ x-item:nth-child(odd) {
     --background: var(--gray-dark);
 }
 
+[id^=cat] {
+    padding-top: 5rem;
+    margin-top: -5rem;
+}
+
 #title {
     display: flex;
     align-items: center;
@@ -82,6 +92,57 @@ x-item:nth-child(odd) {
 #title-block {
     display: flex;
     gap: .5rem;
+}
+
+#toc {
+    position: fixed;
+    top: 5rem;
+    left: .5rem;
+
+    padding: .5rem 1rem;
+    width: fit-content;
+
+    border: solid 2px #000;
+    border-radius: 5px;
+    background-color: var(--gray-light);
+    box-shadow: var(--box-shadow);
+}
+
+#toc a {
+    display: list-item;
+    margin: .5rem 1rem;
+
+    font-size: .8rem;
+
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+#toc summary {
+    cursor: pointer;
+    user-select: none;
+}
+
+#top-link {
+    position: fixed;
+    z-index: 2;
+    bottom: 2rem;
+    right: 2rem;
+
+    padding: .5rem 1rem;
+
+    border: solid 2px #000;
+    border-radius: 5px;
+    background-color: var(--gray-light);
+    box-shadow: var(--box-shadow);
+
+    cursor: pointer;
+
+    transition: background-color .05s;
+}
+
+#top-link:hover {
+    background-color: var(--gray-dark);
 }
 
 #save-changes {
