@@ -25,17 +25,22 @@
         <a id="save-changes">Save Changes</a>
     </header>
 
-    {# Loop through categories. For each category, add items with matching category_id. #}
+    {# Loop through categories #}
     {% for category in categories %}
-    <h2>{{ category.title }}</h2>
-    {% for index, item in items %}{% if item.category_id == category.id %}
+    <div id="cat-{{category.id}}">
+        <h2>{{ category.title }}</h2>
+    </div>
+    {% endfor %}*/
+    
+    {# Loop through items #}
+    {% for index, item in items %}
     <x-item id="{{ item.id }}" title="{{ item.title }}" categoryID="{{ item.category_id }}" status="{{ item.status }}"
-        {% if item.statdesc %} statdesc="{{ item.statdesc }}" {% endif %} cost="{{ item.cost }}"
-        visible="{{ item.visible }}">
+            {% if item.statdesc %} statdesc="{{ item.statdesc }}" {% endif %} cost="{{ item.cost }}"
+            visible="{{ item.visible }}">
         {{ item.note }}
     </x-item>
-    {% endif %}{% endfor %}
-    {% endfor %}
+    {% endfor %}*/
+    
     <script src="static/script.js"></script>
 </body>
 
