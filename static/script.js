@@ -288,6 +288,11 @@ function scrollToTop() {
     history.pushState("", document.title, window.location.pathname + window.location.search);
 }
 
+function goToCatDiv(idCat) {
+    const div = document.getElementById("cat-" + idCat);
+    div.scrollIntoView();
+}
+
 // define custom x-item HTMLElement
 const items = Array.from(document.getElementsByTagName("x-item"));
 window.customElements.define("x-item", Item);
