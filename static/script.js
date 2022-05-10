@@ -240,10 +240,6 @@ class Item extends HTMLElement {
     }
 }
 
-function clear_url() {
-    history.pushState("", document.title, window.location.pathname + window.location.search);
-}
-
 function collect_changes() {
     // get all changed items and return them in Object form
     let changed_items = [];
@@ -288,13 +284,13 @@ function save_changes() {
 }
 
 function scrollToCategory(categoryID) {
+    // scroll to the requested category
     document.getElementById("cat-" + categoryID).scrollIntoView();
-    clear_url();
 }
 
 function scrollToTop() {
+    // scroll to the top of the page
     window.scrollTo(0, 0);
-    clear_url();
 }
 
 // define custom x-item HTMLElement
