@@ -30,7 +30,7 @@
     <details id="toc">
         <summary>Table of Contents (Quick Links)</summary>
         {% for category in categories %}
-        <a href="#cat-{{category.id}}">{{ category.title }}</a>
+        <a onclick="scrollToCategory({{category.id}})">{{ category.title }}</a>
         {% endfor %}
     </details>
 
