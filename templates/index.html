@@ -25,11 +25,20 @@
         <a id="save-changes">Save Changes</a>
     </header>
 
-    <div id="history-panel">
+    <article id="history-panel">
         <h3 id="history-title">History</h3>
         <button id="history-exit" onclick="exitHistoryPanel()">&times;</button>
-        <div id="history-body"></div>
-    </div>
+        <section>
+            <h3 id="history-header"></h3>
+            <div class="entry entry-header">
+                <p>Date</p>
+                <p>Status</p>
+                <p>Cost ($)</p>
+                <p>Note</p>
+            </div>
+            <div id="history-body"></div>
+        </section>
+    </article>
 
     <button id="top-link" onclick="scrollToTop()">Top &bigtriangleup;</button>
 

@@ -108,11 +108,11 @@ async fn main() -> Result<()> {
             for entry in entries {
                 html_str.push_str(&format!(
                     "
-                    <div>
-                        On {}:
-                        Cost: {}
-                        Status: {}
-                        Note: {}
+                    <div class=\"entry\">
+                        <p>{}</p>
+                        <p>{}</p>
+                        <p>{}</p>
+                        <p class=\"note\">{}</p>
                     </div>
                     ",
                     entry.date.unwrap(),

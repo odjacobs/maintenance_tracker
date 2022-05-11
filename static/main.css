@@ -106,10 +106,20 @@ x-item:nth-child(odd) {
 
     content: '';
 
-    width: 105vw;
-    height: 150vh;
+    width: 300vw;
+    height: 300vh;
 
     background-color: #0008;
+}
+
+#history-panel section {
+    padding: 1rem;
+}
+
+#history-body {
+    max-height: calc(70vh - 8rem);
+    overflow: hidden;
+    overflow-y: scroll;
 }
 
 #history-exit {
@@ -128,6 +138,10 @@ x-item:nth-child(odd) {
 
     background: var(--font);
     color: #000;
+}
+
+#history-header {
+    margin-bottom: 1rem;
 }
 
 #history-title {
@@ -212,6 +226,35 @@ x-item:nth-child(odd) {
 #version {
     font-size: .9rem;
     transform: translateY(50%);
+}
+
+.entry {
+    display: grid;
+    grid-template-columns:
+        [date] 22ch [status] 10ch [cost] 10ch [note] auto;
+
+    border: solid 1px var(--gray);
+    border-collapse: collapse;
+
+    text-align: right;
+}
+
+.entry:nth-child(odd) {
+    background-color: var(--gray-dark);
+}
+
+.entry p {
+    border: solid 1px var(--font);
+    padding: .25rem;
+}
+
+.entry p.note {
+    text-align: left;
+}
+
+.entry-header {
+    font-weight: bold;
+    text-align: center;
 }
 
 .item-section {
