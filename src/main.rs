@@ -116,8 +116,8 @@ async fn main() -> Result<()> {
                     </div>
                     ",
                     entry.date.unwrap(),
-                    entry.cost.unwrap_or(0),
                     entry.status.unwrap_or(0),
+                    entry.cost.unwrap_or(0),
                     entry.note.unwrap_or("No Description.".to_string())
                 ));
             }
