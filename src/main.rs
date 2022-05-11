@@ -102,6 +102,7 @@ async fn main() -> Result<()> {
         .get(|mut req: tide::Request<State>| async move {
             let id = req.param("id").unwrap();
             let mut entries = database::collect_item_entries(&mut get_conn(), &id);
+
             let mut html_str = String::from("");
 
             for entry in entries {
@@ -115,7 +116,7 @@ async fn main() -> Result<()> {
                     entry.status.unwrap_or(0),
                     entry.note.unwrap_or("No Description.".to_string())
                 ));
-            }
+            }            
 
             Ok(html_str)
         });

@@ -96,6 +96,17 @@ class Item extends HTMLElement {
         }
 
         const historyStyle = {
+            "margin": "0px auto",
+            "width": "50%",
+            "height": "auto",
+        }
+
+        const historyBtnStyle = {
+            "height": "40px",
+            "padding": "10px 20px",
+            "border": "none",
+            "cursor": "pointer",
+            "background": "url('../static/history.png') center center / contain no-repeat",
             "cursor": "pointer",
         }
 
@@ -168,12 +179,40 @@ class Item extends HTMLElement {
         note.oninput = () => this.setNoteContent(note);
         Object.assign(note.style, noteStyle);
 
+        // history button div
+        const historyBtn = wrapper.appendChild(document.createElement("button"));
+        Object.assign(historyBtn.style, historyBtnStyle);
+
+        // history div
+        const historyInfo = wrapper.appendChild(document.createElement("div"));
+        history.setAttribute("id", "history-" + this.id);
+        Object.assign(historyInfo.style, historyStyle);
+
+        // history button event
+        historyBtn.onclick = () => {
+            if (!historyInfo.classList.contains("active")) {
+                const xhr = new XMLHttpRequest();
+
+                xhr.onload = () => {
+                    historyInfo.innerHTML = xhr.response;
+                    console.log("Get history.");
+                }
+
+                xhr.open("GET", "history/" + this.id, true);
+                xhr.send();
+
+            } else {
+                historyInfo.innerHTML = "";
+            }
+            historyInfo.classList.toggle("active");
+        };
+
         // history link
         const history = wrapper.appendChild(document.createElement("a"));
         history.innerHTML = "History";
         history.onclick = () => getHistory(this.id);
         Object.assign(history.style, historyStyle);
-
+      
         this.shadowRoot.append(wrapper);
 
         // Append this item to the div with the same category.
@@ -310,6 +349,11 @@ function scrollToCategory(categoryID) {
 function scrollToTop() {
     // scroll to the top of the page
     window.scrollTo(0, 0);
+}
+
+function goToCatDiv(idCat) {
+    const div = document.getElementById("cat-" + idCat);
+    div.scrollIntoView();
 }
 
 // define custom x-item HTMLElement
