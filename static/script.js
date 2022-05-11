@@ -283,6 +283,7 @@ function displayHistoryPanel(item) {
 
         xhr.onload = () => {
             historyBody.innerHTML = xhr.response;
+            historyHeader.innerHTML = item.title;
             console.log("GET history for Item #" + item.id);
         }
 
@@ -291,6 +292,7 @@ function displayHistoryPanel(item) {
 
     } else {
         historyBody.innerHTML = "";
+        historyHeader.innerHTML = "";
     }
 
     historyPanel.classList.add("active");
@@ -335,6 +337,7 @@ function scrollToTop() {
 
 const historyPanel = document.getElementById("history-panel");
 const historyBody = document.getElementById("history-body");
+const historyHeader = document.getElementById("history-header");
 
 // define custom x-item HTMLElement
 const items = Array.from(document.getElementsByTagName("x-item"));
