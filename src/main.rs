@@ -107,16 +107,20 @@ async fn main() -> Result<()> {
 
             for entry in entries {
                 html_str.push_str(&format!(
-                    "<li>On {}:
-                    <br> Cost: {}
-                    <br> Status: {}
-                    <br> Note: {} </li>",
+                    "
+                    <div>
+                        On {}:
+                        Cost: {}
+                        Status: {}
+                        Note: {}
+                    </div>
+                    ",
                     entry.date.unwrap(),
                     entry.cost.unwrap_or(0),
                     entry.status.unwrap_or(0),
                     entry.note.unwrap_or("No Description.".to_string())
                 ));
-            }            
+            }
 
             Ok(html_str)
         });

@@ -101,15 +101,6 @@ class Item extends HTMLElement {
             "height": "auto",
         }
 
-        const historyBtnStyle = {
-            "height": "40px",
-            "padding": "10px 20px",
-            "border": "none",
-            "cursor": "pointer",
-            "background": "url('../static/history.png') center center / contain no-repeat",
-            "cursor": "pointer",
-        }
-
         const wrapper = document.createElement("span");
         Object.assign(wrapper.style, wrapperStyle);
 
@@ -179,40 +170,15 @@ class Item extends HTMLElement {
         note.oninput = () => this.setNoteContent(note);
         Object.assign(note.style, noteStyle);
 
-        // history button div
-        const historyBtn = wrapper.appendChild(document.createElement("button"));
-        Object.assign(historyBtn.style, historyBtnStyle);
-
-        // history div
-        const historyInfo = wrapper.appendChild(document.createElement("div"));
-        history.setAttribute("id", "history-" + this.id);
-        Object.assign(historyInfo.style, historyStyle);
-
-        // history button event
-        historyBtn.onclick = () => {
-            if (!historyInfo.classList.contains("active")) {
-                const xhr = new XMLHttpRequest();
-
-                xhr.onload = () => {
-                    historyInfo.innerHTML = xhr.response;
-                    console.log("Get history.");
-                }
-
-                xhr.open("GET", "history/" + this.id, true);
-                xhr.send();
-
-            } else {
-                historyInfo.innerHTML = "";
-            }
-            historyInfo.classList.toggle("active");
-        };
-
         // history link
         const history = wrapper.appendChild(document.createElement("a"));
         history.innerHTML = "History";
         history.onclick = () => getHistory(this.id);
         Object.assign(history.style, historyStyle);
-      
+
+        // history button event
+        history.onclick = () => displayHistoryPanel(this);
+
         this.shadowRoot.append(wrapper);
 
         // Append this item to the div with the same category.
@@ -310,12 +276,27 @@ function collect_changes() {
     return changed_items;
 }
 
-function getHistory(itemID) {
-    let xhr = new XMLHttpRequest();
-    xhr.open("GET", "/history/" + itemID);
-    xhr.send();
+function displayHistoryPanel(item) {
+    if (!historyPanel.classList.contains("active")) {
+        const xhr = new XMLHttpRequest();
 
-    xhr.onload = () => console.log(xhr.response);
+        xhr.onload = () => {
+            historyBody.innerHTML = xhr.response;
+            console.log("GET history for Item #" + item.id);
+        }
+
+        xhr.open("GET", "history/" + item.id, true);
+        xhr.send();
+
+    } else {
+        historyBody.innerHTML = "";
+    }
+
+    historyPanel.classList.add("active");
+}
+
+function exitHistoryPanel() {
+    historyPanel.classList.remove("active");
 }
 
 function post_changes(items) {
@@ -355,6 +336,9 @@ function goToCatDiv(idCat) {
     const div = document.getElementById("cat-" + idCat);
     div.scrollIntoView();
 }
+
+const historyPanel = document.getElementById("history-panel");
+const historyBody = document.getElementById("history-body");
 
 // define custom x-item HTMLElement
 const items = Array.from(document.getElementsByTagName("x-item"));

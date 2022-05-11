@@ -118,36 +118,6 @@ pub mod structs {
             Ok(result)
         }
     }
-
-    #[derive(Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
-    pub struct Entry {
-        pub id: Option<u32>,
-        pub cost: Option<u32>,
-        pub note: Option<String>,
-        pub statdesc: Option<String>,
-        pub status: Option<u32>,
-        pub visible: bool,
-        pub date: Option<String>,
-    }
-
-    impl FromRow for Entry {
-        fn from_row_opt(row: Row) -> Result<Entry, FromRowError> {
-            /// Convert a row of data into an Item.
-            let mut row = row;
-
-            let result = Entry {
-                id: row.take("id").unwrap(),
-                cost: row.take("cost").unwrap(),
-                note: row.take("note").unwrap(),
-                statdesc: row.take("statdesc").unwrap(),
-                status: row.take("status").unwrap(),
-                visible: row.take("visible").unwrap(),
-                date: row.take("date").unwrap(),
-            };
-
-            Ok(result)
-        }
-    }
 }
 
 pub mod functions {
