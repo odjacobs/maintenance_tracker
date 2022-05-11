@@ -111,22 +111,6 @@ x-item:nth-child(odd) {
 
     background-color: #0008;
 }
-#scrollable-panel {
-    position: absolute;
-    top: 40px;
-    bottom: 0px;
-    left: 0;
-    right: 0;
-    overflow-y: auto;
-}
-
-#history-body {
-    padding: 10px 20px;
-}
-
-#history-body div {
-    margin-bottom: 10px;
-}
 
 #history-panel section {
     padding: 1rem;

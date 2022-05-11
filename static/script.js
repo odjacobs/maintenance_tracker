@@ -174,7 +174,6 @@ class Item extends HTMLElement {
 
         // history link
         const history = wrapper.appendChild(document.createElement("a"));
-        history.onclick = () => getHistory(this.id);
         Object.assign(history.style, historyStyle);
 
         // history button event
