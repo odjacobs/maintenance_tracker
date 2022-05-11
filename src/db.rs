@@ -5,7 +5,7 @@ pub mod database {
 
     use mysql::{prelude::*, *};
 
-    use crate::core::structs::{Category, Item, ItemDetails, Entry};
+    use crate::core::structs::{Category, Entry, Item, ItemDetails};
 
     pub fn collect_categories(conn: &mut PooledConn) -> Vec<Category> {
         /// Get all categories from the database.
@@ -45,10 +45,13 @@ pub mod database {
         result
     }
 
-    pub fn collect_entry_by_item(conn: &mut PooledConn, item_id: &str) -> Vec<Entry> {
+
+    pub fn collect_item_entries(conn: &mut PooledConn, item_id: &str) -> Vec<Entry> {
         /// Get all items from the database.
         /// Returns a BTreeMap to preserve order of insertion.
-        let mut entries: Vec<Entry> = conn.query(&format!("SELECT * FROM entry WHERE item_id = {}", item_id)).unwrap();
+        let mut entries: Vec<Entry> = conn
+            .query(&format!("SELECT * FROM entry WHERE item_id = {}", item_id))
+            .unwrap();
 
         entries
     }

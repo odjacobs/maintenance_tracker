@@ -100,10 +100,9 @@ async fn main() -> Result<()> {
     // Ajax History
     app.at("history/:id")
         .get(|mut req: tide::Request<State>| async move {
-            
             let id = req.param("id").unwrap();
-            let mut entries = database::collect_entry_by_item(&mut get_conn(), &id);
-            
+            let mut entries = database::collect_item_entries(&mut get_conn(), &id);
+
             let mut html_str = String::from("");
 
             for entry in entries {
@@ -112,30 +111,15 @@ async fn main() -> Result<()> {
                     <br> Cost: {}
                     <br> Status: {}
                     <br> Note: {} </li>",
-                        entry.date.unwrap(),
-                        entry.cost.unwrap_or(0),
-                        entry.status.unwrap_or(0),
-                        entry.note.unwrap_or("No Description.".to_string())
+                    entry.date.unwrap(),
+                    entry.cost.unwrap_or(0),
+                    entry.status.unwrap_or(0),
+                    entry.note.unwrap_or("No Description.".to_string())
                 ));
             }            
 
             Ok(html_str)
         });
-
-
-    // app.at("/history/:id")
-    //     .get(|req: tide::Request<State>| async move {
-    //         let tera = req.state().tera.clone();
-    //         let mut c = get_conn();
-
-    //         tera.render_response(
-    //             "index.html",
-    //             &context! {
-    //                 "app_title" => constants::APP_TITLE.to_owned(),
-    //                 "app_version" => constants::APP_VERSION.to_owned(),
-    //             },
-    //         )
-    //     });
 
     // run the application
     app.listen(format!("127.0.0.1:{}", dotenv!("CLIENT_PORT")))

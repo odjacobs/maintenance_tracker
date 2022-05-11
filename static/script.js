@@ -107,6 +107,7 @@ class Item extends HTMLElement {
             "border": "none",
             "cursor": "pointer",
             "background": "url('../static/history.png') center center / contain no-repeat",
+            "cursor": "pointer",
         }
 
         const wrapper = document.createElement("span");
@@ -183,17 +184,17 @@ class Item extends HTMLElement {
         Object.assign(historyBtn.style, historyBtnStyle);
 
         // history div
-        const history = wrapper.appendChild(document.createElement("div"));
+        const historyInfo = wrapper.appendChild(document.createElement("div"));
         history.setAttribute("id", "history-" + this.id);
-        Object.assign(history.style, historyStyle);
+        Object.assign(historyInfo.style, historyStyle);
 
         // history button event
         historyBtn.onclick = () => {
-            if (!history.classList.contains("active")) {
+            if (!historyInfo.classList.contains("active")) {
                 const xhr = new XMLHttpRequest();
 
                 xhr.onload = () => {
-                    history.innerHTML = xhr.response;
+                    historyInfo.innerHTML = xhr.response;
                     console.log("Get history.");
                 }
 
@@ -201,11 +202,17 @@ class Item extends HTMLElement {
                 xhr.send();
 
             } else {
-                history.innerHTML = "";
+                historyInfo.innerHTML = "";
             }
-            history.classList.toggle("active");
+            historyInfo.classList.toggle("active");
         };
 
+        // history link
+        const history = wrapper.appendChild(document.createElement("a"));
+        history.innerHTML = "History";
+        history.onclick = () => getHistory(this.id);
+        Object.assign(history.style, historyStyle);
+      
         this.shadowRoot.append(wrapper);
 
         // Append this item to the div with the same category.
@@ -303,6 +310,14 @@ function collect_changes() {
     return changed_items;
 }
 
+function getHistory(itemID) {
+    let xhr = new XMLHttpRequest();
+    xhr.open("GET", "/history/" + itemID);
+    xhr.send();
+
+    xhr.onload = () => console.log(xhr.response);
+}
+
 function post_changes(items) {
     // send JSON data to backend via POST request
     let xhr = new XMLHttpRequest();
@@ -325,9 +340,15 @@ function save_changes() {
     post_changes(changed_items);
 }
 
+function scrollToCategory(categoryID) {
+    // scroll to the requested category
+    document.getElementById("cat-" + categoryID).scrollIntoView();
+    document.getElementById("toc").toggleAttribute("open");
+}
+
 function scrollToTop() {
+    // scroll to the top of the page
     window.scrollTo(0, 0);
-    history.pushState("", document.title, window.location.pathname + window.location.search);
 }
 
 function goToCatDiv(idCat) {
