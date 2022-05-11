@@ -332,11 +332,6 @@ function scrollToTop() {
     window.scrollTo(0, 0);
 }
 
-function goToCatDiv(idCat) {
-    const div = document.getElementById("cat-" + idCat);
-    div.scrollIntoView();
-}
-
 const historyPanel = document.getElementById("history-panel");
 const historyBody = document.getElementById("history-body");
 
