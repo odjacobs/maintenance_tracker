@@ -96,9 +96,11 @@ class Item extends HTMLElement {
         }
 
         const historyStyle = {
-            "margin": "0px auto",
-            "width": "50%",
-            "height": "auto",
+            "width": "30px",
+            "height": "30px",
+            "border": "none",
+            "cursor": "pointer",
+            "background": "url('../static/history.png') center center / contain no-repeat",
         }
 
         const wrapper = document.createElement("span");
@@ -172,7 +174,6 @@ class Item extends HTMLElement {
 
         // history link
         const history = wrapper.appendChild(document.createElement("a"));
-        history.innerHTML = "History";
         history.onclick = () => getHistory(this.id);
         Object.assign(history.style, historyStyle);
 
