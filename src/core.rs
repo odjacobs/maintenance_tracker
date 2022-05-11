@@ -40,7 +40,7 @@ pub mod structs {
 
     impl FromRow for Entry {
         fn from_row_opt(row: Row) -> Result<Entry, FromRowError> {
-            /// Convert a row of data into an Item.
+            /// Convert a row of data into an Entry.
             let mut row = row;
 
             let result = Entry {

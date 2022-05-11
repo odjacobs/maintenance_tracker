@@ -100,17 +100,20 @@ async fn main() -> Result<()> {
     // Ajax History
     app.at("history/:id")
         .get(|mut req: tide::Request<State>| async move {
+            // Get the id of item from url.
             let id = req.param("id").unwrap();
+
+            // Get the entries of the id of item.
             let mut entries = database::collect_item_entries(&mut get_conn(), &id);
 
+            // html String to show on History Panel.
             let mut html_str = String::from("");
-
             for entry in entries {
                 html_str.push_str(&format!(
                     "
                     <div>
                         On {}:
-                        Cost: {}
+                        Cost: ${}
                         Status: {}
                         Note: {}
                     </div>

@@ -112,6 +112,14 @@ x-item:nth-child(odd) {
     background-color: #0008;
 }
 
+#history-body {
+    padding: 10px 20px;
+}
+
+#history-body div {
+    margin-bottom: 10px;
+}
+
 #history-exit {
     display: block;
 
@@ -128,6 +136,8 @@ x-item:nth-child(odd) {
 
     background: var(--font);
     color: #000;
+
+    cursor: pointer;
 }
 
 #history-title {
