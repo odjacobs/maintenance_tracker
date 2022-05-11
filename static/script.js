@@ -95,6 +95,20 @@ class Item extends HTMLElement {
             "max-width": "79ch",
         }
 
+        const historyStyle = {
+            "margin": "0px auto",
+            "width": "50%",
+            "height": "auto",
+        }
+
+        const historyBtnStyle = {
+            "height": "40px",
+            "padding": "10px 20px",
+            "border": "none",
+            "cursor": "pointer",
+            "background": "url('../static/history.png') center center / contain no-repeat",
+        }
+
         const wrapper = document.createElement("span");
         Object.assign(wrapper.style, wrapperStyle);
 
@@ -163,6 +177,34 @@ class Item extends HTMLElement {
         note.textContent = this.innerHTML.trim();
         note.oninput = () => this.setNoteContent(note);
         Object.assign(note.style, noteStyle);
+
+        // history button div
+        const historyBtn = wrapper.appendChild(document.createElement("button"));
+        Object.assign(historyBtn.style, historyBtnStyle);
+
+        // history div
+        const history = wrapper.appendChild(document.createElement("div"));
+        history.setAttribute("id", "history-" + this.id);
+        Object.assign(history.style, historyStyle);
+
+        // history button event
+        historyBtn.onclick = () => {
+            if (!history.classList.contains("active")) {
+                const xhr = new XMLHttpRequest();
+
+                xhr.onload = () => {
+                    history.innerHTML = xhr.response;
+                    console.log("Get history.");
+                }
+
+                xhr.open("GET", "history/" + this.id, true);
+                xhr.send();
+
+            } else {
+                history.innerHTML = "";
+            }
+            history.classList.toggle("active");
+        };
 
         this.shadowRoot.append(wrapper);
 
