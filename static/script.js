@@ -95,6 +95,10 @@ class Item extends HTMLElement {
             "max-width": "79ch",
         }
 
+        const historyStyle = {
+            "cursor": "pointer",
+        }
+
         const wrapper = document.createElement("span");
         Object.assign(wrapper.style, wrapperStyle);
 
@@ -163,6 +167,12 @@ class Item extends HTMLElement {
         note.textContent = this.innerHTML.trim();
         note.oninput = () => this.setNoteContent(note);
         Object.assign(note.style, noteStyle);
+
+        // history link
+        const history = wrapper.appendChild(document.createElement("a"));
+        history.innerHTML = "History";
+        history.onclick = () => getHistory(this.id);
+        Object.assign(history.style, historyStyle);
 
         this.shadowRoot.append(wrapper);
 
@@ -261,6 +271,14 @@ function collect_changes() {
     return changed_items;
 }
 
+function getHistory(itemID) {
+    let xhr = new XMLHttpRequest();
+    xhr.open("GET", "/history/" + itemID);
+    xhr.send();
+
+    xhr.onload = () => console.log(xhr.response);
+}
+
 function post_changes(items) {
     // send JSON data to backend via POST request
     let xhr = new XMLHttpRequest();
@@ -286,6 +304,7 @@ function save_changes() {
 function scrollToCategory(categoryID) {
     // scroll to the requested category
     document.getElementById("cat-" + categoryID).scrollIntoView();
+    document.getElementById("toc").toggleAttribute("open");
 }
 
 function scrollToTop() {

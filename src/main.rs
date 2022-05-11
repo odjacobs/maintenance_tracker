@@ -97,19 +97,19 @@ async fn main() -> Result<()> {
             Ok("OK")
         });
 
-    // app.at("/history/:id")
-    //     .get(|req: tide::Request<State>| async move {
-    //         let tera = req.state().tera.clone();
-    //         let mut c = get_conn();
+    app.at("/history/:id")
+        .get(|req: tide::Request<State>| async move {
+            let tera = req.state().tera.clone();
+            let mut c = get_conn();
 
-    //         tera.render_response(
-    //             "index.html",
-    //             &context! {
-    //                 "app_title" => constants::APP_TITLE.to_owned(),
-    //                 "app_version" => constants::APP_VERSION.to_owned(),
-    //             },
-    //         )
-    //     });
+            tera.render_response(
+                "index.html",
+                &context! {
+                    "app_title" => constants::APP_TITLE.to_owned(),
+                    "app_version" => constants::APP_VERSION.to_owned(),
+                },
+            )
+        });
 
     // run the application
     app.listen(format!("127.0.0.1:{}", dotenv!("CLIENT_PORT")))
