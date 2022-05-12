@@ -129,7 +129,7 @@ x-item:nth-child(odd) {
 #history-body {
     max-height: calc(70vh - 8rem);
     overflow: hidden;
-    overflow-y: scroll;
+    overflow-y: auto;
 }
 
 #history-exit {
@@ -198,7 +198,7 @@ x-item:nth-child(odd) {
     height: calc(100% - 8rem);
 
     overflow: hidden;
-    overflow-y: scroll;
+    overflow-y: auto;
 }
 
 #toc a {

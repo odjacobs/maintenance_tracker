@@ -30,7 +30,7 @@ class Item extends HTMLElement {
         this.changed = false;
         this.id = this.getAttribute("id");
         this.categoryID = this.getAttribute("categoryID");
-        this.note = this.innerHTML || ""
+        this.note = this.innerHTML || "";
 
         this.repairCost = this.getAttribute("cost") || "0.00";
 
