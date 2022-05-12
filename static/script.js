@@ -354,33 +354,43 @@ function save_changes() {
     post_changes(changed_items);
 }
 
-function statusFilter() {
+function statusFilter(type) {
     // cycle between green, yellow, and red status indicator colors
     let color = "";
     let name = document.getElementById("statusFilterDot").getAttribute("name");
-    switch (statusFilterDot.getAttribute("name")) {
+    let label = "All Machines";
+    switch (type) {
         case "0":
             color = "var(--yellow)";
             name = "1";
+            label = "Warning Machines";
             break;
         case "1":
             color = "var(--red)";
             name = "2";
+            label = "Stopped Machines";
             break;
 
         case "2":
             color = "";
             name = "";
+            label = "All Machines";
             break;
 
         default:
             color = "var(--green)";
             name = "0";
+            label = "Active Machines";
             break;
     }    
 
+    // Update the symbol and label.
     statusFilterDot.setAttribute("name", name);
     statusFilterDot.style.backgroundColor = color;
+    document.getElementById("status-selection").querySelector("b").innerHTML = label;
+
+    // Hide the filter-nav.
+    document.getElementById("filter-nav").classList.remove("active");
 
     // Call Click function to hide/unhide x-item.
     items.forEach((item) => {
@@ -407,4 +417,11 @@ const historyHeader = document.getElementById("history-header");
 const items = Array.from(document.getElementsByTagName("x-item"));
 window.customElements.define("x-item", Item);
 
+// call function to save the changes
 document.getElementById("save-changes").onclick = save_changes;
+
+// hide/unhide filter-nav
+document.getElementById("status-selection").onmouseover = () => document.getElementById("filter-nav").classList.add("active");
+document.getElementById("status-selection").onmouseout = () => document.getElementById("filter-nav").classList.remove("active");
+document.getElementById("filter-nav").onmouseover = () => document.getElementById("filter-nav").classList.add("active");
+document.getElementById("filter-nav").onmouseout = () => document.getElementById("filter-nav").classList.remove("active");

@@ -11,7 +11,7 @@
     --toc-width: 267px;
     --hover-bg: #2e3538;
     --exit-hover: #fccccc;
-    --status-dot-diameter: 1.4rem;
+    --status-dot-filter-diameter: 1rem;
 }
 
 * {
@@ -205,15 +205,77 @@ x-item {
         cursor: pointer;
         user-select: none;
     }
-#statusFilterDot {
+
+#filter-panel {
+    position: fixed;
+    z-index: 2;
+    bottom: 2.5rem;
+    left: .5rem;
+    height: 1.5rem;
+    width: calc(var(--toc-width) - 1rem);
+    line-height: 0;
+    text-align: center;
+}
+    #filter-panel b {
+        font-size: 10pt;
+    }
+
+#statusFilterDot, #filter-nav span {
     display: inline-block;
-    margin-left: 10px;
     vertical-align: middle;
     width: 0px;
     height: 0px;
-    padding: calc(var(--status-dot-diameter)/2);
+    padding: calc(var(--status-dot-filter-diameter)/2.5);
     border-radius: 50%;
-    border: 1px solid #fff;
+    border: 1px solid #fff;    
+}
+
+#filter-nav {
+    display: none;
+    position: absolute;
+    bottom: 1.5rem;
+    left: calc(var(--toc-width)/4);    
+    width: calc(var(--toc-width)/2);
+    padding-bottom: 0.25rem;
+    text-align: justify;
+}
+    
+    #filter-nav.active {
+        display: block;        
+    }
+
+    #filter-nav > div {
+        padding: 0.25rem 0;
+        cursor: pointer;
+    }
+
+        #filter-nav > div:hover {
+            background: black;
+        }
+
+    #filter-nav span {
+        border: none;
+        padding: calc(var(--status-dot-filter-diameter)/3);
+    }
+
+        #filter-nav div:nth-child(1) span {
+            border: 1px solid #fff;
+        }
+
+        #filter-nav div:nth-child(2) span {
+            background: var(--green);
+        }
+
+        #filter-nav div:nth-child(3) span {
+            background: var(--yellow);
+        }
+
+        #filter-nav div:nth-child(4) span {
+            background: var(--red);
+        }
+
+#status-selection {
+    display: inline-block;
     cursor: pointer;
 }
 
