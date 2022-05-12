@@ -105,6 +105,7 @@ class Item extends HTMLElement {
         }
 
         const wrapper = document.createElement("span");
+        wrapper.setAttribute("class", "item");        
         Object.assign(wrapper.style, wrapperStyle);
 
         // item title
@@ -113,7 +114,7 @@ class Item extends HTMLElement {
         Object.assign(title.style, titleStyle);
 
         // item status indicator dot
-        const statusDot = wrapper.appendChild(document.createElement("span"));
+        const statusDot = wrapper.appendChild(document.createElement("span"));        
         statusDot.onclick = (o) => this.nextStatusDotColor(o);
         Object.assign(statusDot.style, statusDotStyle);
         this.setStatusDotColor(statusDot);
@@ -186,6 +187,21 @@ class Item extends HTMLElement {
 
         // Append this item to the div with the same category.
         document.getElementById("cat-" + this.categoryID).appendChild(this);
+
+        // Set the event to filter the items by status
+        this.onclick = () => this.setWrapperDisplay(wrapper);
+    }
+
+    setWrapperDisplay(wrapper) {
+        // Get attribute "name" of statusFilterDot.
+        let name = document.getElementById("statusFilterDot").getAttribute("name");
+
+        // Show the x-item if the statusFilterDot is clear or same as status.
+        if (name == "" || this.status == name) {
+            wrapper.style.display = "flex";
+        } else {
+            wrapper.style.display = "none";
+        }
     }
 
     nextStatusDotColor(event) {
@@ -327,6 +343,40 @@ function save_changes() {
 
     // send data to backend via POST request
     post_changes(changed_items);
+}
+
+function statusFilter() {
+    // cycle between green, yellow, and red status indicator colors
+    let color = "";
+    let name = document.getElementById("statusFilterDot").getAttribute("name");
+    switch (statusFilterDot.getAttribute("name")) {
+        case "0":
+            color = "var(--yellow)";
+            name = "1";
+            break;
+        case "1":
+            color = "var(--red)";
+            name = "2";
+            break;
+
+        case "2":
+            color = "";
+            name = "";
+            break;
+
+        default:
+            color = "var(--green)";
+            name = "0";
+            break;
+    }    
+
+    statusFilterDot.setAttribute("name", name);
+    statusFilterDot.style.backgroundColor = color;
+
+    // Call Click function to hide/unhide x-item.
+    items.forEach((item) => {
+        item.click();
+    });
 }
 
 function scrollToCategory(categoryID) {

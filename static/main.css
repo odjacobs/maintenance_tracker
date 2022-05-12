@@ -4,10 +4,14 @@
     --gray: #444;
     --gray-dark: #333;
     --gray-light: #555;
+    --green: #080;
+    --yellow: #ca0;
+    --red: #800;
     --font: #ddd;
     --toc-width: 267px;
     --hover-bg: #2e3538;
     --exit-hover: #fccccc;
+    --status-dot-diameter: 1.4rem;
 }
 
 * {
@@ -201,6 +205,17 @@ x-item {
         cursor: pointer;
         user-select: none;
     }
+#statusFilterDot {
+    display: inline-block;
+    margin-left: 10px;
+    vertical-align: middle;
+    width: 0px;
+    height: 0px;
+    padding: calc(var(--status-dot-diameter)/2);
+    border-radius: 50%;
+    border: 1px solid #fff;
+    cursor: pointer;
+}
 
 #top-link {
     position: fixed;
