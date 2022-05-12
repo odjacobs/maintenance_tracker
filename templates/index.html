@@ -46,7 +46,7 @@
         <aside id="toc">
             <nav>
                 <b>Table of Contents</b>
-                <span id="statusFilterDot" onclick="statusFilter()"></span>
+                <span id="statusFilterDot" name="" onclick="statusFilter()"></span>
                 {% for category in categories %}
                 <a onclick="scrollToCategory({{category.id}})">{{ category.title }}</a>
                 {% endfor %}
