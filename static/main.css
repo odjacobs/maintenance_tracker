@@ -6,6 +6,7 @@
     --gray-light: #555;
     --font: #ddd;
     --toc-width: 267px;
+    --hover-background: #2e3538;
 }
 
 * {
@@ -186,6 +187,10 @@ x-item {
     cursor: pointer;
 }
 
+#toc a:hover {
+    font-weight: bolder;
+}
+
 #toc summary {
     cursor: pointer;
     user-select: none;
@@ -212,6 +217,14 @@ x-item {
 
 #save-changes {
     display: block;
+    padding: 5px;
+    border: 1px solid beige;
+    border-radius: 5px;
+    background: none;
+}
+
+#save-changes:hover {
+    background: var(--hover-background);
 }
 
 #version {
