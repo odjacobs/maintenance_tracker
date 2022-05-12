@@ -115,7 +115,7 @@ x-item {
 #history-body {
     max-height: calc(70vh - 8rem);
     overflow: hidden;
-    overflow-y: scroll;
+    overflow-y: auto;
 }
 
 #history-exit {
@@ -167,29 +167,29 @@ x-item {
     background-color: var(--gray-dark);
 }
 
-    #toc nav {
-        position: fixed;
-        top: 5.5rem;
-        left: .5rem;
-        padding: 0 .5rem;
-        width: calc(var(--toc-width) - 1rem);
-        height: calc(100% - 8rem);
-        overflow: hidden;
-        overflow-y: scroll;
-    }
+#toc nav {
+    position: fixed;
+    top: 5.5rem;
+    left: .5rem;
+    padding: 0 .5rem;
+    width: calc(var(--toc-width) - 1rem);
+    height: calc(100% - 8rem);
+    overflow: hidden;
+    overflow-y: auto;
+}
 
-    #toc a {
-        display: list-item;
-        margin: .5rem 1rem;
-        font-size: .8rem;
-        text-decoration: underline;
-        cursor: pointer;
-    }
+#toc a {
+    display: list-item;
+    margin: .5rem 1rem;
+    font-size: .8rem;
+    text-decoration: underline;
+    cursor: pointer;
+}
 
-    #toc summary {
-        cursor: pointer;
-        user-select: none;
-    }
+#toc summary {
+    cursor: pointer;
+    user-select: none;
+}
 
 #top-link {
     position: fixed;
