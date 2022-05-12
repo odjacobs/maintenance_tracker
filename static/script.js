@@ -30,7 +30,7 @@ class Item extends HTMLElement {
         this.changed = false;
         this.id = this.getAttribute("id");
         this.categoryID = this.getAttribute("categoryID");
-        this.note = this.innerHTML || ""
+        this.note = this.innerHTML || "";
 
         this.repairCost = this.getAttribute("cost") || "0.00";
 
@@ -50,8 +50,8 @@ class Item extends HTMLElement {
             "align-items": "center",
             "gap": "1rem",
             "margin": "0 auto",
-            "padding": ".5rem 0",
-            "width": "100%",
+            "padding": ".5rem 10%",
+            "width": "80%",
             "background-color": "var(--background)",
         };
 
@@ -163,7 +163,9 @@ class Item extends HTMLElement {
         // input for this.repairCost
         const repairCostInput = statusDetails.appendChild(
             document.createElement("input")
-        );
+        );       
+        repairCostInput.type = "number"; // Only get the number input
+        repairCostInput.step = 1;
         repairCostInput.value = this.repairCost;
         repairCostInput.oninput = () => this.setRepairCost(repairCostInput);
 
@@ -310,7 +312,10 @@ function post_changes(items) {
     xhr.setRequestHeader("Content-Type", "application/json");
 
     // log response to the console
-    xhr.onload = () => console.log(xhr.response);
+    xhr.onload = () => {
+        console.log(xhr.response);
+        alert("Successfully!");
+    }
 
     xhr.send(JSON.stringify(items));
 }
