@@ -42,28 +42,34 @@
 
     <button id="top-link" onclick="scrollToTop()">Top &bigtriangleup;</button>
 
-    <details id="toc">
-        <summary>Table of Contents (Quick Links)</summary>
-        {% for category in categories %}
-        <a onclick="scrollToCategory({{category.id}})">{{ category.title }}</a>
-        {% endfor %}
-    </details>
+    <main>
+        <aside id="toc">
+            <nav>
+                <b>Table of Contents</b>
+                {% for category in categories %}
+                <a onclick="scrollToCategory({{category.id}})">{{ category.title }}</a>
+                {% endfor %}
+            </nav>
+        </aside>
 
-    {# Loop through categories #}
-    {% for category in categories %}
-    <div id="cat-{{category.id}}">
-        <h2>{{ category.title }}</h2>
-    </div>
-    {% endfor %}*/
+        <section id="">
+            {# Loop through categories #}
+            {% for category in categories %}
+            <div id="cat-{{category.id}}">
+                <h2>{{ category.title }}</h2>
+            </div>
+            {% endfor %}
 
-    {# Loop through items #}
-    {% for index, item in items %}
-    <x-item id="{{ item.id }}" title="{{ item.title }}" categoryID="{{ item.category_id }}"
-        status="{{ item.details.status }}" {% if item.details.statdesc %} statdesc="{{ item.details.statdesc }}" {%
-        endif %} cost="{{ item.details.cost }}" visible="{{ item.details.visible }}">
-        {{ item.details.note }}
-    </x-item>
-    {% endfor %}
+            {# Loop through items #}
+            {% for index, item in items %}
+            <x-item id="{{ item.id }}" title="{{ item.title }}" categoryID="{{ item.category_id }}"
+                status="{{ item.details.status }}" {% if item.details.statdesc %} statdesc="{{ item.details.statdesc }}"
+                {% endif %} cost="{{ item.details.cost }}" visible="{{ item.details.visible }}">
+                {{ item.details.note }}
+            </x-item>
+            {% endfor %}
+        </section>
+    </main>
 
     <script src="static/script.js"></script>
 </body>
