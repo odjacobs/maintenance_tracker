@@ -276,5 +276,9 @@ x-item:nth-child(odd) {
 
 .entry-header {
     font-weight: bold;
-    text-align: center;
+    color: var(--font);
+}
+
+.history li span {
+    margin-left: 180px;
 }
