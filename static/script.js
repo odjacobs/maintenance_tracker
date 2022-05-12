@@ -193,6 +193,10 @@ class Item extends HTMLElement {
     }
 
     setWrapperDisplay(wrapper) {
+
+        // Do nothing when the status is being changing.
+        if (this.changed == true) return;
+
         // Get attribute "name" of statusFilterDot.
         let name = document.getElementById("statusFilterDot").getAttribute("name");
 
@@ -278,18 +282,23 @@ function collect_changes() {
     // get all changed items and return them in Object form
     let changed_items = [];
     items.forEach((item) => {
-        if (item.changed) changed_items.push({
-            "id": parseInt(item.id),
-            "title": item.title,
-            "category_id": parseInt(item.categoryID),
-            "details": {
-                "status": parseInt(item.status),
-                "statdesc": item.statusDescription,
-                "cost": parseInt(item.repairCost.replace(".", "")),
-                "note": item.noteContent,
-                "visible": item.visible == "true" ? true : false,
-            },
-        });
+        if (item.changed) {
+            changed_items.push({
+                "id": parseInt(item.id),
+                "title": item.title,
+                "category_id": parseInt(item.categoryID),
+                "details": {
+                    "status": parseInt(item.status),
+                    "statdesc": item.statusDescription,
+                    "cost": parseInt(item.repairCost.replace(".", "")),
+                    "note": item.noteContent,
+                    "visible": item.visible == "true" ? true : false,
+                },
+            });
+
+            // Call the click function to hide/unhide if the status dot changed.
+            item.click();
+        }
     });
 
     return changed_items;
