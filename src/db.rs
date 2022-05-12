@@ -45,7 +45,6 @@ pub mod database {
         result
     }
 
-
     pub fn collect_item_entries(conn: &mut PooledConn, item_id: &str) -> Vec<Entry> {
         /// Get all entries from the database.
         /// Returns a Vector of Entry.
