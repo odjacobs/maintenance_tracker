@@ -47,12 +47,11 @@ class Item extends HTMLElement {
         // styles
         const wrapperStyle = {
             "display": "flex",
-            "flex-wrap": "wrap",
             "align-items": "center",
-            "justify-content": "center",
             "gap": "1rem",
             "margin": "0 auto",
             "padding": ".5rem 0",
+            "width": "100%",
             "background-color": "var(--background)",
         };
 
@@ -76,6 +75,8 @@ class Item extends HTMLElement {
             "justify-content": "right",
             "gap": ".25rem",
             "width": "300px",
+            "min-width": "300px",
+            "height": "50px",
         };
 
         const statusSelectStyle = {
