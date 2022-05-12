@@ -102,10 +102,6 @@ async fn main() -> Result<()> {
         .get(|mut req: tide::Request<State>| async move {
             // Get the id of item from url.
             let id = req.param("id").unwrap();
-            let mut entries = database::collect_entry_by_item(&mut get_conn(), &id);
-            
-            let mut html_str = String::from("");
-            let mut json_str = String::from("[");
 
             // Get the entries of the id of item.
             let mut entries = database::collect_item_entries(&mut get_conn(), &id);
@@ -114,24 +110,6 @@ async fn main() -> Result<()> {
             let mut html_str = String::from("");
             for entry in entries {
                 html_str.push_str(&format!(
-                    "<li>On {}: <br>
-                        <span> Cost: {} </span> <br>
-                        <span> Status: {} </span> <br>
-                        <span> Note: {} </span> <br>
-                    </li>",
-                        entry.date.unwrap(),
-                        entry.cost.unwrap_or(0),
-                        entry.status.unwrap_or(0),
-                        entry.note.unwrap_or("No Description.".to_string())
-                ));
-
-                json_str.push_str(&format!(
-                    "'date': '{}', 'cost': '{}', 'status': '{}', 'statdesc': '{}', 'note': '{}' ",
-                        entry.date.unwrap(),
-                        entry.cost.unwrap_or(0),
-                        entry.status.unwrap_or(0),
-                        entry.statdesc.unwrap_or("No Description.".to_string()),
-                        entry.note.unwrap_or("No Description.".to_string())
                     "
                     <div class=\"entry\">
                         <p>{}</p>
