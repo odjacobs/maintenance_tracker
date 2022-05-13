@@ -2,9 +2,11 @@
 
 use std::collections::BTreeMap;
 use std::env::var;
+use std::io;
 
 use dotenv::dotenv;
 use mysql::{prelude::*, *};
+use rpassword::read_password;
 use tera::Tera;
 use tide_tera::prelude::*;
 
@@ -21,29 +23,50 @@ struct State {
     /// Container for simple runtime data.
     app_title: Option<String>,
     app_version: Option<String>,
+    conn_string: String,
     tera: Tera,
 }
 
 impl State {
-    fn new(tera_instance: Tera) -> Self {
+    fn new(tera_instance: Tera, conn_string: String) -> Self {
         State {
             app_title: None,
             app_version: None,
+            conn_string: conn_string,
             tera: tera_instance,
         }
     }
 }
 
-fn get_conn() -> PooledConn {
+fn get_conn(conn_string: &String) -> Result<PooledConn> {
     /// Establish a database connection from environment variables.
-    database::connect(format!(
+    database::connect(conn_string.clone())
+}
+
+fn get_conn_string() -> String {
+    /// Get user input for database information.
+    println!("Username:");
+    let mut username: String = String::new();
+    io::stdin().read_line(&mut username);
+
+    println!("Password:");
+    let password = read_password().unwrap();
+
+    println!("MySQL URL:");
+    let mut url: String = String::new();
+    io::stdin().read_line(&mut url);
+
+    println!("Database Name:");
+    let mut name: String = String::new();
+    io::stdin().read_line(&mut name);
+
+    format!(
         "mysql://{}:{}@{}/{}",
-        var("USER").unwrap(),
-        var("PASS").unwrap(),
-        var("DB_URL").unwrap(),
-        var("DB_NAME").unwrap(),
-    ))
-    .unwrap()
+        username.trim(),
+        password.trim(),
+        url.trim(),
+        name.trim(),
+    )
 }
 
 #[async_std::main]
@@ -52,13 +75,24 @@ async fn main() -> Result<()> {
 
     tide::log::start();
 
-    let mut conn = get_conn();
+    let mut conn_string: String = String::new();
+    let mut conn: PooledConn;
+
+    loop {
+        conn_string = get_conn_string();
+        conn = match get_conn(&conn_string) {
+            Ok(conn) => conn,
+            Err(_) => continue,
+        };
+
+        break;
+    }
 
     // we're using tera for templating
     let mut tera = Tera::new("templates/**/*").expect("Error parsing templates directory.");
     tera.autoescape_on(vec!["html"]);
 
-    let mut state = State::new(tera);
+    let mut state = State::new(tera, conn_string.clone());
     let mut app = tide::with_state(state);
 
     // get existing database items
@@ -71,7 +105,8 @@ async fn main() -> Result<()> {
         .get(|req: tide::Request<State>| async move {
             /// Get information from the database.
             let tera = req.state().tera.clone();
-            let mut c = get_conn();
+            let conn_string = req.state().conn_string.clone();
+            let mut c = get_conn(&conn_string).unwrap();
 
             tera.render_response(
                 "index.html",
@@ -87,9 +122,10 @@ async fn main() -> Result<()> {
             /// Update information in the database.
             let req_string = req.body_string().await?;
             let items = functions::parse_json_string(req_string);
+            let conn_string = req.state().conn_string.clone();
 
             for (id, item) in items {
-                database::update_item(&mut get_conn(), &item)?;
+                database::update_item(&mut get_conn(&conn_string).unwrap(), &item)?;
             }
 
             Ok("OK")
@@ -100,9 +136,11 @@ async fn main() -> Result<()> {
         .get(|mut req: tide::Request<State>| async move {
             // get item id from URL
             let id = req.param("id").unwrap();
+            let conn_string = req.state().conn_string.clone();
 
             // get all entries with matching id
-            let mut entries = database::collect_item_entries(&mut get_conn(), &id);
+            let mut entries =
+                database::collect_item_entries(&mut get_conn(&conn_string.clone()).unwrap(), &id);
 
             // build HTML response
             let mut html_str = String::from("");
@@ -127,8 +165,7 @@ async fn main() -> Result<()> {
         });
 
     // run the application
-    app.listen(format!("127.0.0.1:{}", var("CLIENT_PORT").unwrap()))
-        .await?;
+    app.listen("127.0.0.1:8000").await?;
 
     Ok(())
 }
