@@ -46,8 +46,6 @@ class Item extends HTMLElement {
         this.LAST_STATUS_DESCRIPTION = this.statusDescription;
 
         // styles
-        this.linkStyle = { "cursor": "pointer" };
-
         const wrapperStyle = {
             "display": "flex",
             "align-items": "center",
@@ -99,6 +97,8 @@ class Item extends HTMLElement {
             "max-width": "79ch",
         }
 
+        const linkStyle = { "cursor": "pointer" };
+
         this.wrapper = document.createElement("span");
         Object.assign(this.wrapper.style, wrapperStyle);
 
@@ -106,12 +106,12 @@ class Item extends HTMLElement {
         this.hideLink = this.wrapper.appendChild(document.createElement("a"));
         this.hideLink.innerHTML = "Hide";
         this.hideLink.onclick = () => this.setVisible(false);
-        Object.assign(this.hideLink.style, this.linkStyle);
+        Object.assign(this.hideLink.style, linkStyle);
 
         this.unhideLink = this.wrapper.appendChild(document.createElement("a"));
         this.unhideLink.innerHTML = "Unhide";
         this.unhideLink.onclick = () => this.setVisible(true);
-        Object.assign(this.unhideLink.style, this.linkStyle);
+        Object.assign(this.unhideLink.style, linkStyle);
 
         // item title
         const title = this.wrapper.appendChild(document.createElement("p"));
@@ -186,7 +186,7 @@ class Item extends HTMLElement {
         const history = this.wrapper.appendChild(document.createElement("a"));
         history.innerHTML = "History";
         history.onclick = () => getHistory(this.id);
-        Object.assign(history.style, this.linkStyle);
+        Object.assign(history.style, linkStyle);
 
         // history button event
         history.onclick = () => displayHistoryPanel(this);
