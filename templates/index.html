@@ -52,7 +52,11 @@
             </nav>
         </aside>
 
-        <section id="">
+        <section>
+            <details id="hidden-items">
+                <summary>Hidden Items</summary>
+            </details>
+
             {# Loop through categories #}
             {% for category in categories %}
             <div id="cat-{{category.id}}">

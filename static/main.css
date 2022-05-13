@@ -66,6 +66,12 @@ select {
     color: var(--gray-dark);
 }
 
+[open] summary {
+    margin-bottom: .5rem;
+    padding-bottom: .25rem;
+    border-bottom: solid 1px var(--font);
+}
+
 x-item {
     --background: var(--gray);
 
@@ -85,6 +91,11 @@ x-item:nth-child(odd) {
 [id^=cat] {
     padding-top: 5rem;
     margin-top: -5rem;
+}
+
+#hidden-items {
+    padding: 1rem;
+    background-color: var(--gray-dark);
 }
 
 #history-panel {

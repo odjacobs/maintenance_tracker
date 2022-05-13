@@ -30,6 +30,7 @@ class Item extends HTMLElement {
         this.changed = false;
         this.id = this.getAttribute("id");
         this.categoryID = this.getAttribute("categoryID");
+        this.category = document.getElementById("cat-" + this.categoryID);
         this.note = this.innerHTML || "";
 
         this.repairCost = this.getAttribute("cost") || "0.00";
@@ -96,10 +97,8 @@ class Item extends HTMLElement {
             "max-width": "79ch",
         }
 
-        const historyStyle = {
-            "margin": "0px auto",
-            "width": "50%",
-            "height": "auto",
+        const linkStyle = {
+            "cursor": "pointer",
         }
 
         const wrapper = document.createElement("span");
@@ -175,15 +174,36 @@ class Item extends HTMLElement {
         const history = wrapper.appendChild(document.createElement("a"));
         history.innerHTML = "History";
         history.onclick = () => getHistory(this.id);
-        Object.assign(history.style, historyStyle);
+        Object.assign(history.style, linkStyle);
 
         // history button event
         history.onclick = () => displayHistoryPanel(this);
 
+        // hide link
+        if (this.visible == "true") {
+            const hide = wrapper.appendChild(document.createElement("a"));
+            hide.innerHTML = "Hide";
+            hide.onclick = () => this.setVisible(false);
+            Object.assign(hide.style, linkStyle);
+        }
+
+        else {
+            const unhide = wrapper.appendChild(document.createElement("a"));
+            unhide.innerHTML = "Unhide";
+            unhide.onclick = () => this.setVisible(true);
+            Object.assign(unhide.style, linkStyle);
+        }
+
+
         this.shadowRoot.append(wrapper);
 
-        // Append this item to the div with the same category.
-        document.getElementById("cat-" + this.categoryID).appendChild(this);
+        // append to category if item is visible
+        if (this.visible == "true") {
+            this.category.appendChild(this);
+        }
+        else {
+            hiddenItems.appendChild(this);
+        }
     }
 
     nextStatusDotColor(event) {
@@ -254,6 +274,21 @@ class Item extends HTMLElement {
         statusDot.style.backgroundColor = color;
         return color;
     }
+
+    setVisible(value) {
+        this.visible = `${value}`;
+        this.changed = true;
+
+        if (!value) {
+            this.category.removeChild(this);
+            hiddenItems.appendChild(this);
+        }
+        else {
+            hiddenItems.removeChild(this);
+            this.category.appendChild(this);
+        }
+    }
+
 }
 
 function collect_changes() {
@@ -335,6 +370,7 @@ function scrollToTop() {
     window.scrollTo(0, 0);
 }
 
+const hiddenItems = document.getElementById("hidden-items");
 const historyPanel = document.getElementById("history-panel");
 const historyBody = document.getElementById("history-body");
 const historyHeader = document.getElementById("history-header");
