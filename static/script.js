@@ -217,6 +217,7 @@ class Item extends HTMLElement {
             wrapper.style.display = "flex";
         } else {
             wrapper.style.display = "none";
+        }
     }
 
     nextStatusDotColor(event) {
