@@ -46,6 +46,8 @@ class Item extends HTMLElement {
         this.LAST_STATUS_DESCRIPTION = this.statusDescription;
 
         // styles
+        this.linkStyle = { "cursor": "pointer" };
+
         const wrapperStyle = {
             "display": "flex",
             "align-items": "center",
@@ -97,26 +99,34 @@ class Item extends HTMLElement {
             "max-width": "79ch",
         }
 
-        const linkStyle = {
-            "cursor": "pointer",
-        }
 
-        const wrapper = document.createElement("span");
-        Object.assign(wrapper.style, wrapperStyle);
+        this.wrapper = document.createElement("span");
+        Object.assign(this.wrapper.style, wrapperStyle);
+
+        // hide & unhide links (dynamic)
+        this.hideLink = this.wrapper.appendChild(document.createElement("a"));
+        this.hideLink.innerHTML = "Hide";
+        this.hideLink.onclick = () => this.setVisible(false);
+        Object.assign(this.hideLink.style, this.linkStyle);
+
+        this.unhideLink = this.wrapper.appendChild(document.createElement("a"));
+        this.unhideLink.innerHTML = "Unhide";
+        this.unhideLink.onclick = () => this.setVisible(true);
+        Object.assign(this.unhideLink.style, this.linkStyle);
 
         // item title
-        const title = wrapper.appendChild(document.createElement("p"));
+        const title = this.wrapper.appendChild(document.createElement("p"));
         title.textContent = this.hasAttribute("title") ? this.getAttribute("title") : "";
         Object.assign(title.style, titleStyle);
 
         // item status indicator dot
-        const statusDot = wrapper.appendChild(document.createElement("span"));
+        const statusDot = this.wrapper.appendChild(document.createElement("span"));
         statusDot.onclick = (o) => this.nextStatusDotColor(o);
         Object.assign(statusDot.style, statusDotStyle);
         this.setStatusDotColor(statusDot);
 
         // item status details (description selector, cost input)
-        const statusDetails = wrapper.appendChild(document.createElement("span"));
+        const statusDetails = this.wrapper.appendChild(document.createElement("span"));
         Object.assign(statusDetails.style, statusDetailsStyle);
 
         const statusSelect = statusDetails.appendChild(document.createElement("select"));
@@ -165,37 +175,22 @@ class Item extends HTMLElement {
         repairCostInput.oninput = () => this.setRepairCost(repairCostInput);
 
         // maintenance notes
-        const note = wrapper.appendChild(document.createElement("textarea"));
+        const note = this.wrapper.appendChild(document.createElement("textarea"));
         note.textContent = this.innerHTML.trim();
         note.oninput = () => this.setNoteContent(note);
         Object.assign(note.style, noteStyle);
 
         // history link
-        const history = wrapper.appendChild(document.createElement("a"));
+        const history = this.wrapper.appendChild(document.createElement("a"));
         history.innerHTML = "History";
         history.onclick = () => getHistory(this.id);
-        Object.assign(history.style, linkStyle);
+        Object.assign(history.style, this.linkStyle);
 
         // history button event
         history.onclick = () => displayHistoryPanel(this);
 
-        // hide link
-        if (this.visible == "true") {
-            const hide = wrapper.appendChild(document.createElement("a"));
-            hide.innerHTML = "Hide";
-            hide.onclick = () => this.setVisible(false);
-            Object.assign(hide.style, linkStyle);
-        }
-
-        else {
-            const unhide = wrapper.appendChild(document.createElement("a"));
-            unhide.innerHTML = "Unhide";
-            unhide.onclick = () => this.setVisible(true);
-            Object.assign(unhide.style, linkStyle);
-        }
-
-
-        this.shadowRoot.append(wrapper);
+        this.setHideLink(this.visible == "true");
+        this.shadowRoot.append(this.wrapper);
 
         // append to category if item is visible
         if (this.visible == "true") {
@@ -218,6 +213,17 @@ class Item extends HTMLElement {
         this.status = `${intStatus}`;
         this.changed = true;
         this.setStatusDotColor(statusDot);
+    }
+
+    setHideLink(value) {
+        if (value) {
+            this.wrapper.appendChild(this.hideLink);
+            this.wrapper.removeChild(this.unhideLink);
+        }
+        else {
+            this.wrapper.appendChild(this.unhideLink);
+            this.wrapper.removeChild(this.hideLink);
+        }
     }
 
     setNoteContent(textareaElement) {
@@ -287,8 +293,9 @@ class Item extends HTMLElement {
             hiddenItems.removeChild(this);
             this.category.appendChild(this);
         }
-    }
 
+        this.setHideLink(value);
+    }
 }
 
 function collect_changes() {
