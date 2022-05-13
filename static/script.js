@@ -102,12 +102,13 @@ class Item extends HTMLElement {
         this.wrapper = document.createElement("span");
         Object.assign(this.wrapper.style, wrapperStyle);
 
-        // hide & unhide links (dynamic)
+        // hide link (only shown if this.visible == "true")
         this.hideLink = this.wrapper.appendChild(document.createElement("a"));
         this.hideLink.innerHTML = "Hide";
         this.hideLink.onclick = () => this.setVisible(false);
         Object.assign(this.hideLink.style, linkStyle);
 
+        // unhide link (only shown if this.visible == "false")
         this.unhideLink = this.wrapper.appendChild(document.createElement("a"));
         this.unhideLink.innerHTML = "Unhide";
         this.unhideLink.onclick = () => this.setVisible(true);
