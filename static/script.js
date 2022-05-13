@@ -377,17 +377,20 @@ function filterItemsByStatus(type) {
     // hide categories with no items after filter
     categories.forEach((category) => {
         // get list of items where status == name
-        let matchingItems = Array.from(category.querySelectorAll(`x-item[status="${name}"]`));
+        if (!name) category.style.display = "";
 
-        // if no items match, set category display = none
-        category.style.display = matchingItems.length > 0 ? "" : "none";
+        else {
+            let matchingItems = Array.from(category.querySelectorAll(`x-item[status="${name}"]`));
+
+            // if no items match, set category display = none
+            category.style.display = matchingItems.length > 0 ? "" : "none";
+        }
     });
 }
 
 function scrollToCategory(categoryID) {
     // scroll to the requested category
     document.getElementById("cat-" + categoryID).scrollIntoView();
-    document.getElementById("toc").toggleAttribute("open");
 }
 
 function scrollToTop() {
