@@ -80,8 +80,7 @@
             {# Loop through items #}
             {% for index, item in items %}
             <x-item id="{{ item.id }}" title="{{ item.title }}" categoryID="{{ item.category_id }}"
-                status="{{ item.details.status }}" {% if item.details.statdesc %} statdesc="{{ item.details.statdesc }}"
-                {% endif %} cost="{{ item.details.cost }}" visible="{{ item.details.visible }}">
+                status="{{ item.details.status }}" cost="{{ item.details.cost }}" visible="{{ item.details.visible }}">
                 {{ item.details.note }}
             </x-item>
             {% endfor %}

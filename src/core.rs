@@ -32,7 +32,6 @@ pub mod structs {
         pub id: Option<u32>,
         pub cost: Option<u32>,
         pub note: Option<String>,
-        pub statdesc: Option<String>,
         pub status: Option<u32>,
         pub visible: bool,
         pub date: Option<String>,
@@ -47,7 +46,6 @@ pub mod structs {
                 id: row.take("id").unwrap(),
                 cost: row.take("cost").unwrap(),
                 note: row.take("note").unwrap(),
-                statdesc: row.take("statdesc").unwrap(),
                 status: row.take("status").unwrap(),
                 visible: row.take("visible").unwrap(),
                 date: row.take("date").unwrap(),
@@ -97,7 +95,6 @@ pub mod structs {
         /// Mutable details about an Item.
         pub cost: Option<u32>,
         pub note: Option<String>,
-        pub statdesc: Option<String>,
         pub status: u8,
         pub visible: bool,
     }
@@ -110,7 +107,6 @@ pub mod structs {
             let result = ItemDetails {
                 cost: row.take("cost").unwrap(),
                 note: row.take("note").unwrap(),
-                statdesc: row.take("statdesc").unwrap(),
                 status: row.take("status").unwrap(),
                 visible: row.take("visible").unwrap(),
             };

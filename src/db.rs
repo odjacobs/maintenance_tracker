@@ -23,7 +23,7 @@ pub mod database {
             let details: ItemDetails = conn
                 .exec_first(
                     r"
-                    SELECT cost, note, statdesc, status, visible
+                    SELECT cost, note, status, visible
                     FROM entry WHERE item_id = :item_id ORDER BY id DESC
                     ",
                     params! {
@@ -82,12 +82,11 @@ pub mod database {
                 :cost
             );
             
-            INSERT INTO entry (item_id, cost, note, statdesc, status, visible)
+            INSERT INTO entry (item_id, cost, note, status, visible)
             VALUES (
                 :item_id,
                 :cost,
                 :note,
-                :statdesc,
                 :status,
                 :visible
             )",
@@ -97,7 +96,6 @@ pub mod database {
                 "item_id" => item.id,
                 "cost" => details.cost,
                 "note" => &details.note,
-                "statdesc" => &details.statdesc,
                 "status" => details.status,
                 "visible" => details.visible,
             },
@@ -135,12 +133,11 @@ pub mod database {
         let details = item.details.as_ref().unwrap();
         conn.exec_drop(
             r"
-            INSERT INTO entry (item_id, cost, note, statdesc, status, visible)
+            INSERT INTO entry (item_id, cost, note, status, visible)
             VALUES (
                 :item_id,
                 :cost,
                 :note,
-                :statdesc,
                 :status,
                 :visible
             );
@@ -149,7 +146,6 @@ pub mod database {
                 "item_id" => item.id,
                 "cost" => details.cost,
                 "note" => &details.note,
-                "statdesc" => &details.statdesc,
                 "status" => details.status,
                 "visible" => details.visible,
             },
