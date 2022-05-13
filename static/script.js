@@ -67,14 +67,9 @@ class Item extends HTMLElement {
             "cursor": "pointer",
         };
 
-        const statusDetailsStyle = {
+        const costDetailsStyle = {
             "display": "flex",
-            "flex-wrap": "wrap",
-            "justify-content": "right",
-            "gap": ".25rem",
-            "width": "300px",
-            "min-width": "300px",
-            "height": "50px",
+            "margin": "0 .5rem",
         };
 
         const lblRepairCostStyle = {
@@ -118,18 +113,18 @@ class Item extends HTMLElement {
         this.setStatusDotColor(statusDot);
 
         // item status details (description selector, cost input)
-        const statusDetails = this.wrapper.appendChild(document.createElement("span"));
-        Object.assign(statusDetails.style, statusDetailsStyle);
+        const costDetails = this.wrapper.appendChild(document.createElement("span"));
+        Object.assign(costDetails.style, costDetailsStyle);
 
         // label that displays text "Repair Cost:"
-        const lblRepairCost = statusDetails.appendChild(
+        const lblRepairCost = costDetails.appendChild(
             document.createElement("p")
         );
         lblRepairCost.innerHTML = "Repair Cost:";
         Object.assign(lblRepairCost.style, lblRepairCostStyle);
 
         // input for this.repairCost
-        const repairCostInput = statusDetails.appendChild(
+        const repairCostInput = costDetails.appendChild(
             document.createElement("input")
         );
 
@@ -312,7 +307,6 @@ function postChanges(items) {
     // log response to the console
     xhr.onload = () => {
         console.log(xhr.response);
-        alert("Successfully!");
     }
 
     xhr.send(JSON.stringify(items));
