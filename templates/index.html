@@ -25,17 +25,68 @@
         <a id="save-changes">Save Changes</a>
     </header>
 
-    {# Loop through categories. For each category, add items with matching category_id. #}
-    {% for category in categories %}
-    <h2>{{ category.title }}</h2>
-    {% for index, item in items %}{% if item.category_id == category.id %}
-    <x-item id="{{ item.id }}" title="{{ item.title }}" categoryID="{{ item.category_id }}" status="{{ item.status }}"
-        {% if item.statdesc %} statdesc="{{ item.statdesc }}" {% endif %} cost="{{ item.cost }}"
-        visible="{{ item.visible }}">
-        {{ item.note }}
-    </x-item>
-    {% endif %}{% endfor %}
-    {% endfor %}
+    <article id="history-panel">
+        <h3 id="history-title">History</h3>
+        <button id="history-exit" onclick="exitHistoryPanel()">&times;</button>
+        <section>
+            <h3 id="history-header"></h3>
+            <div class="entry entry-header">
+                <p>Date</p>
+                <p>Status</p>
+                <p>Cost ($)</p>
+                <p>Note</p>
+            </div>
+            <div id="history-body"></div>
+        </section>
+    </article>
+
+    <div id="filter-widget">
+        <nav id="filter-nav">
+            <b class="filter-ok" onclick="filterItemsByStatus('')">OK</b>
+            <b class="filter-warning" onclick="filterItemsByStatus('0')">Warning</b>
+            <b class="filter-stopped" onclick="filterItemsByStatus('1')">Stopped</b>
+            <b class="filter-all" onclick="filterItemsByStatus('2')">Show All</b>
+        </nav>
+        <div id="filter-current">
+            <span id="filter-status" name=""></span>
+            <b>Filter: Show All</b>
+        </div>
+    </div>
+
+    <button id="top-widget" onclick="scrollToTop()">Top &bigtriangleup;</button>
+
+    <main>
+        <aside id="toc">
+            <nav>
+                <b>Table of Contents</b>
+                {% for category in categories %}
+                <a onclick="scrollToCategory({{category.id}})">{{ category.title }}</a>
+                {% endfor %}
+            </nav>
+        </aside>
+
+        <section>
+            <details id="hidden-items">
+                <summary>Hidden Items</summary>
+            </details>
+
+            {# Loop through categories #}
+            {% for category in categories %}
+            <div id="cat-{{category.id}}">
+                <h2>{{ category.title }}</h2>
+            </div>
+            {% endfor %}
+
+            {# Loop through items #}
+            {% for index, item in items %}
+            <x-item id="{{ item.id }}" title="{{ item.title }}" categoryID="{{ item.category_id }}"
+                status="{{ item.details.status }}" cost="{{ item.details.cost }}" visible="{{ item.details.visible }}">
+                {{ item.details.note }}
+            </x-item>
+            {% endfor %}
+        </section>
+    </main>
+
     <script src="static/script.js"></script>
 </body>
 

@@ -73,7 +73,6 @@ async fn main() -> Result<()> {
         .get(|req: tide::Request<State>| async move {
             /// Get information from the database.
             let tera = req.state().tera.clone();
-
             let mut c = get_conn();
 
             tera.render_response(
@@ -96,6 +95,37 @@ async fn main() -> Result<()> {
             }
 
             Ok("OK")
+        });
+
+    // ajax history
+    app.at("history/:id")
+        .get(|mut req: tide::Request<State>| async move {
+            // get item id from URL
+            let id = req.param("id").unwrap();
+
+            // get all entries with matching id
+            let mut entries = database::collect_item_entries(&mut get_conn(), &id);
+
+            // build HTML response
+            let mut html_str = String::from("");
+            for entry in entries {
+                html_str.push_str(&format!(
+                    "
+                    <div class=\"entry\">
+                        <p>{}</p>
+                        <p>{}</p>
+                        <p>{}</p>
+                        <p class=\"note\">{}</p>
+                    </div>
+                    ",
+                    entry.date.unwrap(),
+                    entry.status.unwrap_or(0),
+                    entry.cost.unwrap_or(0),
+                    entry.note.unwrap_or("No Description.".to_string())
+                ));
+            }
+
+            Ok(html_str)
         });
 
     // run the application
