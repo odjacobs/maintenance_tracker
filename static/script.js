@@ -10,7 +10,7 @@ class Item extends HTMLElement {
      * - title <String>
      * - categoryID <Number>
      * - visible <bool>
-     * - cost <Optional[Number]> [DEFAULT: 0.00]
+     * - cost <Optional[Number]> [DEFAULT: 0]
      * - status <Optional[String]> [DEFAULT: "0"]
      */
     constructor() {
@@ -32,7 +32,7 @@ class Item extends HTMLElement {
         this.category = document.getElementById("cat-" + this.categoryID);
         this.note = this.innerHTML || "";
 
-        this.repairCost = this.getAttribute("cost") || "0.00";
+        this.repairCost = this.getAttribute("cost") || "0";
 
         this.status = this.getAttribute("status") || "0";
         this.visible = this.getAttribute("visible") || "false";
@@ -69,7 +69,12 @@ class Item extends HTMLElement {
 
         const costDetailsStyle = {
             "display": "flex",
+            "align-items": "baseline",
             "margin": "0 .5rem",
+        };
+
+        const costInputStyle = {
+            "width": "10ch",
         };
 
         const lblRepairCostStyle = {
@@ -116,11 +121,11 @@ class Item extends HTMLElement {
         const costDetails = this.wrapper.appendChild(document.createElement("span"));
         Object.assign(costDetails.style, costDetailsStyle);
 
-        // label that displays text "Repair Cost:"
+        // label that displays text "Est. Repair Cost:"
         const lblRepairCost = costDetails.appendChild(
             document.createElement("p")
         );
-        lblRepairCost.innerHTML = "Repair Cost:";
+        lblRepairCost.innerHTML = "Est. Repair Cost:";
         Object.assign(lblRepairCost.style, lblRepairCostStyle);
 
         // input for this.repairCost
@@ -129,9 +134,11 @@ class Item extends HTMLElement {
         );
 
         repairCostInput.type = "number";
-        repairCostInput.step = 1;
+        repairCostInput.step = 10;
+        repairCostInput.min = 0;
         repairCostInput.value = this.repairCost;
         repairCostInput.oninput = () => this.setRepairCost(repairCostInput);
+        Object.assign(repairCostInput.style, costInputStyle);
 
         // maintenance notes
         const note = this.wrapper.appendChild(document.createElement("textarea"));
