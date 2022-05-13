@@ -45,10 +45,9 @@ pub mod database {
         result
     }
 
-
     pub fn collect_item_entries(conn: &mut PooledConn, item_id: &str) -> Vec<Entry> {
-        /// Get all items from the database.
-        /// Returns a BTreeMap to preserve order of insertion.
+        /// Get all entries from the database.
+        /// Returns a Vector of Entry.
         let mut entries: Vec<Entry> = conn
             .query(&format!("SELECT * FROM entry WHERE item_id = {}", item_id))
             .unwrap();

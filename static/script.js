@@ -53,8 +53,8 @@ class Item extends HTMLElement {
             "align-items": "center",
             "gap": "1rem",
             "margin": "0 auto",
-            "padding": ".5rem 0",
-            "width": "100%",
+            "padding": ".5rem 10%",
+            "width": "80%",
             "background-color": "var(--background)",
         };
 
@@ -98,8 +98,7 @@ class Item extends HTMLElement {
             "min-width": "280px",
             "max-width": "79ch",
         }
-
-
+        
         this.wrapper = document.createElement("span");
         Object.assign(this.wrapper.style, wrapperStyle);
 
@@ -170,7 +169,9 @@ class Item extends HTMLElement {
         // input for this.repairCost
         const repairCostInput = statusDetails.appendChild(
             document.createElement("input")
-        );
+        );       
+        repairCostInput.type = "number"; // Only get the number input
+        repairCostInput.step = 1;
         repairCostInput.value = this.repairCost;
         repairCostInput.oninput = () => this.setRepairCost(repairCostInput);
 
@@ -191,7 +192,10 @@ class Item extends HTMLElement {
 
         this.setHideLink(this.visible == "true");
         this.shadowRoot.append(this.wrapper);
-
+      
+        // Set the event to filter the items by status
+        this.onclick = () => this.setWrapperDisplay(wrapper);
+      
         // append to category if item is visible
         if (this.visible == "true") {
             this.category.appendChild(this);
@@ -199,6 +203,20 @@ class Item extends HTMLElement {
         else {
             hiddenItems.appendChild(this);
         }
+    }
+
+    setWrapperDisplay(wrapper) {
+        // Do nothing when the status is being changing.
+        if (this.changed == true) return;
+
+        // Get attribute "name" of statusFilterDot.
+        let name = document.getElementById("statusFilterDot").getAttribute("name");
+
+        // Show the x-item if the statusFilterDot is clear or same as status.
+        if (name == "" || this.status == name) {
+            wrapper.style.display = "flex";
+        } else {
+            wrapper.style.display = "none";
     }
 
     nextStatusDotColor(event) {
@@ -302,18 +320,23 @@ function collect_changes() {
     // get all changed items and return them in Object form
     let changed_items = [];
     items.forEach((item) => {
-        if (item.changed) changed_items.push({
-            "id": parseInt(item.id),
-            "title": item.title,
-            "category_id": parseInt(item.categoryID),
-            "details": {
-                "status": parseInt(item.status),
-                "statdesc": item.statusDescription,
-                "cost": parseInt(item.repairCost.replace(".", "")),
-                "note": item.noteContent,
-                "visible": item.visible == "true" ? true : false,
-            },
-        });
+        if (item.changed) {
+            changed_items.push({
+                "id": parseInt(item.id),
+                "title": item.title,
+                "category_id": parseInt(item.categoryID),
+                "details": {
+                    "status": parseInt(item.status),
+                    "statdesc": item.statusDescription,
+                    "cost": parseInt(item.repairCost.replace(".", "")),
+                    "note": item.noteContent,
+                    "visible": item.visible == "true" ? true : false,
+                },
+            });
+
+            // Call the click function to hide/unhide if the status dot changed.
+            item.click();
+        }
     });
 
     return changed_items;
@@ -352,7 +375,10 @@ function post_changes(items) {
     xhr.setRequestHeader("Content-Type", "application/json");
 
     // log response to the console
-    xhr.onload = () => console.log(xhr.response);
+    xhr.onload = () => {
+        console.log(xhr.response);
+        alert("Successfully!");
+    }
 
     xhr.send(JSON.stringify(items));
 }
@@ -364,6 +390,50 @@ function save_changes() {
 
     // send data to backend via POST request
     post_changes(changed_items);
+}
+
+function statusFilter(type) {
+    // cycle between green, yellow, and red status indicator colors
+    let color = "";
+    let name = document.getElementById("statusFilterDot").getAttribute("name");
+    let label = "All Machines";
+    switch (type) {
+        case "0":
+            color = "var(--yellow)";
+            name = "1";
+            label = "Warning Machines";
+            break;
+        case "1":
+            color = "var(--red)";
+            name = "2";
+            label = "Stopped Machines";
+            break;
+
+        case "2":
+            color = "";
+            name = "";
+            label = "All Machines";
+            break;
+
+        default:
+            color = "var(--green)";
+            name = "0";
+            label = "Active Machines";
+            break;
+    }    
+
+    // Update the symbol and label.
+    statusFilterDot.setAttribute("name", name);
+    statusFilterDot.style.backgroundColor = color;
+    document.getElementById("status-selection").querySelector("b").innerHTML = label;
+
+    // Hide the filter-nav.
+    document.getElementById("filter-nav").classList.remove("active");
+
+    // Call Click function to hide/unhide x-item.
+    items.forEach((item) => {
+        item.click();
+    });
 }
 
 function scrollToCategory(categoryID) {
@@ -386,4 +456,11 @@ const historyHeader = document.getElementById("history-header");
 const items = Array.from(document.getElementsByTagName("x-item"));
 window.customElements.define("x-item", Item);
 
+// call function to save the changes
 document.getElementById("save-changes").onclick = save_changes;
+
+// hide/unhide filter-nav
+document.getElementById("status-selection").onmouseover = () => document.getElementById("filter-nav").classList.add("active");
+document.getElementById("status-selection").onmouseout = () => document.getElementById("filter-nav").classList.remove("active");
+document.getElementById("filter-nav").onmouseover = () => document.getElementById("filter-nav").classList.add("active");
+document.getElementById("filter-nav").onmouseout = () => document.getElementById("filter-nav").classList.remove("active");
