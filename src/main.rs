@@ -1,9 +1,7 @@
 #![allow(unused)]
 
-#[macro_use]
-extern crate dotenv_codegen;
-
 use std::collections::BTreeMap;
+use std::env::var;
 
 use dotenv::dotenv;
 use mysql::{prelude::*, *};
@@ -40,10 +38,10 @@ fn get_conn() -> PooledConn {
     /// Establish a database connection from environment variables.
     database::connect(format!(
         "mysql://{}:{}@{}/{}",
-        dotenv!("USER"),
-        dotenv!("PASS"),
-        dotenv!("DB_URL"),
-        dotenv!("DB_NAME"),
+        var("USER").unwrap(),
+        var("PASS").unwrap(),
+        var("DB_URL").unwrap(),
+        var("DB_NAME").unwrap(),
     ))
     .unwrap()
 }
@@ -129,7 +127,7 @@ async fn main() -> Result<()> {
         });
 
     // run the application
-    app.listen(format!("127.0.0.1:{}", dotenv!("CLIENT_PORT")))
+    app.listen(format!("127.0.0.1:{}", var("CLIENT_PORT").unwrap()))
         .await?;
 
     Ok(())
