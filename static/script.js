@@ -433,6 +433,18 @@ function filterItemsByStatus(type) {
         if (!name) item.setDisplay(true);
         else item.setDisplay(item.status == name);
     });
+
+    // blank name means show all
+    if (!name) return;
+
+    // hide categories with no items after filter
+    categories.forEach((category) => {
+        // get list of items where status == name
+        let matchingItems = Array.from(category.querySelectorAll(`x-item[status="${name}"]`));
+
+        // if no items match, set category display = none
+        category.style.display = matchingItems.length > 0 ? "" : "none";
+    });
 }
 
 function scrollToCategory(categoryID) {
@@ -454,6 +466,7 @@ const filterStatus = document.getElementById("filter-status");
 const filterCurrent = document.getElementById("filter-current");
 
 // define custom x-item HTMLElement
+const categories = Array.from(document.querySelectorAll('[id^="cat-"]'));
 const items = Array.from(document.getElementsByTagName("x-item"));
 window.customElements.define("x-item", Item);
 
