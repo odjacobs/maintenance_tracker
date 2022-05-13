@@ -30,6 +30,7 @@ class Item extends HTMLElement {
         this.changed = false;
         this.id = this.getAttribute("id");
         this.categoryID = this.getAttribute("categoryID");
+        this.category = document.getElementById("cat-" + this.categoryID);
         this.note = this.innerHTML || "";
 
         this.repairCost = this.getAttribute("cost") || "0.00";
@@ -45,6 +46,8 @@ class Item extends HTMLElement {
         this.LAST_STATUS_DESCRIPTION = this.statusDescription;
 
         // styles
+        this.linkStyle = { "cursor": "pointer" };
+
         const wrapperStyle = {
             "display": "flex",
             "align-items": "center",
@@ -95,32 +98,34 @@ class Item extends HTMLElement {
             "min-width": "280px",
             "max-width": "79ch",
         }
+        
+        this.wrapper = document.createElement("span");
+        Object.assign(this.wrapper.style, wrapperStyle);
 
-        const historyStyle = {
-            "width": "30px",
-            "height": "30px",
-            "border": "none",
-            "cursor": "pointer",
-            "background": "url('../static/history.png') center center / contain no-repeat",
-        }
+        // hide & unhide links (dynamic)
+        this.hideLink = this.wrapper.appendChild(document.createElement("a"));
+        this.hideLink.innerHTML = "Hide";
+        this.hideLink.onclick = () => this.setVisible(false);
+        Object.assign(this.hideLink.style, this.linkStyle);
 
-        const wrapper = document.createElement("span");
-        wrapper.setAttribute("class", "item");        
-        Object.assign(wrapper.style, wrapperStyle);
+        this.unhideLink = this.wrapper.appendChild(document.createElement("a"));
+        this.unhideLink.innerHTML = "Unhide";
+        this.unhideLink.onclick = () => this.setVisible(true);
+        Object.assign(this.unhideLink.style, this.linkStyle);
 
         // item title
-        const title = wrapper.appendChild(document.createElement("p"));
+        const title = this.wrapper.appendChild(document.createElement("p"));
         title.textContent = this.hasAttribute("title") ? this.getAttribute("title") : "";
         Object.assign(title.style, titleStyle);
 
         // item status indicator dot
-        const statusDot = wrapper.appendChild(document.createElement("span"));        
+        const statusDot = this.wrapper.appendChild(document.createElement("span"));
         statusDot.onclick = (o) => this.nextStatusDotColor(o);
         Object.assign(statusDot.style, statusDotStyle);
         this.setStatusDotColor(statusDot);
 
         // item status details (description selector, cost input)
-        const statusDetails = wrapper.appendChild(document.createElement("span"));
+        const statusDetails = this.wrapper.appendChild(document.createElement("span"));
         Object.assign(statusDetails.style, statusDetailsStyle);
 
         const statusSelect = statusDetails.appendChild(document.createElement("select"));
@@ -171,29 +176,36 @@ class Item extends HTMLElement {
         repairCostInput.oninput = () => this.setRepairCost(repairCostInput);
 
         // maintenance notes
-        const note = wrapper.appendChild(document.createElement("textarea"));
+        const note = this.wrapper.appendChild(document.createElement("textarea"));
         note.textContent = this.innerHTML.trim();
         note.oninput = () => this.setNoteContent(note);
         Object.assign(note.style, noteStyle);
 
         // history link
-        const history = wrapper.appendChild(document.createElement("a"));
-        Object.assign(history.style, historyStyle);
+        const history = this.wrapper.appendChild(document.createElement("a"));
+        history.innerHTML = "History";
+        history.onclick = () => getHistory(this.id);
+        Object.assign(history.style, this.linkStyle);
 
         // history button event
         history.onclick = () => displayHistoryPanel(this);
 
-        this.shadowRoot.append(wrapper);
-
-        // Append this item to the div with the same category.
-        document.getElementById("cat-" + this.categoryID).appendChild(this);
-
+        this.setHideLink(this.visible == "true");
+        this.shadowRoot.append(this.wrapper);
+      
         // Set the event to filter the items by status
         this.onclick = () => this.setWrapperDisplay(wrapper);
+      
+        // append to category if item is visible
+        if (this.visible == "true") {
+            this.category.appendChild(this);
+        }
+        else {
+            hiddenItems.appendChild(this);
+        }
     }
 
     setWrapperDisplay(wrapper) {
-
         // Do nothing when the status is being changing.
         if (this.changed == true) return;
 
@@ -205,7 +217,6 @@ class Item extends HTMLElement {
             wrapper.style.display = "flex";
         } else {
             wrapper.style.display = "none";
-        }
     }
 
     nextStatusDotColor(event) {
@@ -220,6 +231,17 @@ class Item extends HTMLElement {
         this.status = `${intStatus}`;
         this.changed = true;
         this.setStatusDotColor(statusDot);
+    }
+
+    setHideLink(value) {
+        if (value) {
+            this.wrapper.appendChild(this.hideLink);
+            this.wrapper.removeChild(this.unhideLink);
+        }
+        else {
+            this.wrapper.appendChild(this.unhideLink);
+            this.wrapper.removeChild(this.hideLink);
+        }
     }
 
     setNoteContent(textareaElement) {
@@ -275,6 +297,22 @@ class Item extends HTMLElement {
 
         statusDot.style.backgroundColor = color;
         return color;
+    }
+
+    setVisible(value) {
+        this.visible = `${value}`;
+        this.changed = true;
+
+        if (!value) {
+            this.category.removeChild(this);
+            hiddenItems.appendChild(this);
+        }
+        else {
+            hiddenItems.removeChild(this);
+            this.category.appendChild(this);
+        }
+
+        this.setHideLink(value);
     }
 }
 
@@ -409,6 +447,7 @@ function scrollToTop() {
     window.scrollTo(0, 0);
 }
 
+const hiddenItems = document.getElementById("hidden-items");
 const historyPanel = document.getElementById("history-panel");
 const historyBody = document.getElementById("history-body");
 const historyHeader = document.getElementById("history-header");
