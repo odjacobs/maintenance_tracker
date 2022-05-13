@@ -144,8 +144,8 @@ class Item extends HTMLElement {
         if (this.hasAttribute("options")) {
             // selector options are passed to the item as a string
             // options are separated by semicolons
-            let option_list = this.getAttribute("options").split(";");
-            for (let option of option_list) {
+            let optionList = this.getAttribute("options").split(";");
+            for (let option of optionList) {
                 let o = statusSelect.appendChild(document.createElement("option"));
                 o.value = option;
                 o.innerHTML = option;
@@ -315,12 +315,12 @@ class Item extends HTMLElement {
     }
 }
 
-function collect_changes() {
+function collectChanges() {
     // get all changed items and return them in Object form
-    let changed_items = [];
+    let changedItems = [];
     items.forEach((item) => {
         if (item.changed) {
-            changed_items.push({
+            changedItems.push({
                 "id": parseInt(item.id),
                 "title": item.title,
                 "category_id": parseInt(item.categoryID),
@@ -338,7 +338,7 @@ function collect_changes() {
         }
     });
 
-    return changed_items;
+    return changedItems;
 }
 
 function displayHistoryPanel(item) {
@@ -366,7 +366,7 @@ function exitHistoryPanel() {
     historyPanel.classList.remove("active");
 }
 
-function post_changes(items) {
+function postChanges(items) {
     // send JSON data to backend via POST request
     let xhr = new XMLHttpRequest();
     xhr.open("POST", "/");
@@ -382,13 +382,13 @@ function post_changes(items) {
     xhr.send(JSON.stringify(items));
 }
 
-function save_changes() {
+function saveChanges() {
     // get changes as an array of Objects
-    let changed_items = collect_changes();
-    console.log(changed_items);
+    let changedItems = collectChanges();
+    console.log(changedItems);
 
     // send data to backend via POST request
-    post_changes(changed_items);
+    postChanges(changedItems);
 }
 
 function filterItemsByStatus(type) {
@@ -458,7 +458,7 @@ const items = Array.from(document.getElementsByTagName("x-item"));
 window.customElements.define("x-item", Item);
 
 // call function to save the changes
-document.getElementById("save-changes").onclick = save_changes;
+document.getElementById("save-changes").onclick = saveChanges;
 
 // hide/unhide filter-nav
 document.getElementById("filter-widget").onmouseover = () => document.getElementById("filter-nav").classList.add("active");
