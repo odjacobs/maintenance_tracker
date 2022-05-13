@@ -367,17 +367,20 @@ function filterItemsByStatus(type) {
 
     // update display for all items
     items.forEach((item) => {
-        if (!name) item.setDisplay(true);
-        else item.setDisplay(item.status == name);
+        if (!name) {
+            item.setDisplay(true);
+        }
+        else {
+            item.setDisplay(item.status == name);
+        }
     });
-
-    // blank name means show all
-    if (!name) return;
 
     // hide categories with no items after filter
     categories.forEach((category) => {
         // get list of items where status == name
-        if (!name) category.style.display = "";
+        if (!name) {
+            category.style.display = "";
+        }
 
         else {
             let matchingItems = Array.from(category.querySelectorAll(`x-item[status="${name}"]`));
