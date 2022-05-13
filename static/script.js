@@ -98,7 +98,7 @@ class Item extends HTMLElement {
             "min-width": "280px",
             "max-width": "79ch",
         }
-        
+
         this.wrapper = document.createElement("span");
         Object.assign(this.wrapper.style, wrapperStyle);
 
@@ -169,8 +169,9 @@ class Item extends HTMLElement {
         // input for this.repairCost
         const repairCostInput = statusDetails.appendChild(
             document.createElement("input")
-        );       
-        repairCostInput.type = "number"; // Only get the number input
+        );
+
+        repairCostInput.type = "number";
         repairCostInput.step = 1;
         repairCostInput.value = this.repairCost;
         repairCostInput.oninput = () => this.setRepairCost(repairCostInput);
@@ -192,10 +193,7 @@ class Item extends HTMLElement {
 
         this.setHideLink(this.visible == "true");
         this.shadowRoot.append(this.wrapper);
-      
-        // Set the event to filter the items by status
-        this.onclick = () => this.setWrapperDisplay(wrapper);
-      
+
         // append to category if item is visible
         if (this.visible == "true") {
             this.category.appendChild(this);
@@ -205,18 +203,18 @@ class Item extends HTMLElement {
         }
     }
 
-    setWrapperDisplay(wrapper) {
-        // Do nothing when the status is being changing.
+    setDisplay(value) {
+        // filter items by status.
+        // ignore changed items
         if (this.changed == true) return;
 
-        // Get attribute "name" of statusFilterDot.
-        let name = document.getElementById("statusFilterDot").getAttribute("name");
-
-        // Show the x-item if the statusFilterDot is clear or same as status.
-        if (name == "" || this.status == name) {
-            wrapper.style.display = "flex";
-        } else {
-            wrapper.style.display = "none";
+        // set item display value
+        if (value) {
+            this.wrapper.style.display = "flex";
+        }
+        else {
+            this.wrapper.style.display = "none";
+        }
     }
 
     nextStatusDotColor(event) {
@@ -334,8 +332,8 @@ function collect_changes() {
                 },
             });
 
-            // Call the click function to hide/unhide if the status dot changed.
-            item.click();
+            // update display for all items
+            item.setDisplay(item.status == filterStatus.name);
         }
     });
 
@@ -392,47 +390,47 @@ function save_changes() {
     post_changes(changed_items);
 }
 
-function statusFilter(type) {
+function filterItemsByStatus(type) {
     // cycle between green, yellow, and red status indicator colors
     let color = "";
-    let name = document.getElementById("statusFilterDot").getAttribute("name");
-    let label = "All Machines";
+    let name = filterStatus.getAttribute("name");
+    let label = "Show All";
+
     switch (type) {
         case "0":
             color = "var(--yellow)";
             name = "1";
-            label = "Warning Machines";
+            label = "Warning";
             break;
+
         case "1":
             color = "var(--red)";
             name = "2";
-            label = "Stopped Machines";
+            label = "Stopped";
             break;
 
         case "2":
             color = "";
             name = "";
-            label = "All Machines";
+            label = "Show All";
             break;
 
         default:
             color = "var(--green)";
             name = "0";
-            label = "Active Machines";
+            label = "OK";
             break;
-    }    
+    }
 
-    // Update the symbol and label.
-    statusFilterDot.setAttribute("name", name);
-    statusFilterDot.style.backgroundColor = color;
-    document.getElementById("status-selection").querySelector("b").innerHTML = label;
+    // update the symbol and label
+    filterStatus.setAttribute("name", name);
+    filterStatus.style.backgroundColor = color;
+    filterCurrent.querySelector("b").innerHTML = `Filter: ${label}`;
 
-    // Hide the filter-nav.
-    document.getElementById("filter-nav").classList.remove("active");
-
-    // Call Click function to hide/unhide x-item.
+    // update display for all items
     items.forEach((item) => {
-        item.click();
+        if (!name) item.setDisplay(true);
+        else item.setDisplay(item.status == name);
     });
 }
 
@@ -451,6 +449,8 @@ const hiddenItems = document.getElementById("hidden-items");
 const historyPanel = document.getElementById("history-panel");
 const historyBody = document.getElementById("history-body");
 const historyHeader = document.getElementById("history-header");
+const filterStatus = document.getElementById("filter-status");
+const filterCurrent = document.getElementById("filter-current");
 
 // define custom x-item HTMLElement
 const items = Array.from(document.getElementsByTagName("x-item"));
@@ -460,7 +460,7 @@ window.customElements.define("x-item", Item);
 document.getElementById("save-changes").onclick = save_changes;
 
 // hide/unhide filter-nav
-document.getElementById("status-selection").onmouseover = () => document.getElementById("filter-nav").classList.add("active");
-document.getElementById("status-selection").onmouseout = () => document.getElementById("filter-nav").classList.remove("active");
+document.getElementById("filter-widget").onmouseover = () => document.getElementById("filter-nav").classList.add("active");
+document.getElementById("filter-widget").onmouseout = () => document.getElementById("filter-nav").classList.remove("active");
 document.getElementById("filter-nav").onmouseover = () => document.getElementById("filter-nav").classList.add("active");
 document.getElementById("filter-nav").onmouseout = () => document.getElementById("filter-nav").classList.remove("active");

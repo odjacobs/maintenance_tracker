@@ -82,9 +82,9 @@ x-item {
     width: 100%;
 }
 
-    x-item:nth-child(odd) {
-        --background: var(--gray-dark);
-    }
+x-item:nth-child(odd) {
+    --background: var(--gray-dark);
+}
 
 [id^=cat] {
     padding-top: 5rem;
@@ -110,24 +110,24 @@ x-item {
     box-shadow: 2px 2px 15px #000;
 }
 
-    #history-panel.active {
-        display: block;
-    }
+#history-panel.active {
+    display: block;
+}
 
-    #history-panel:after {
-        position: fixed;
-        top: -50%;
-        left: -100%;
-        z-index: -1;
-        content: '';
-        width: 300vw;
-        height: 300vh;
-        background-color: #0008;
-    }
+#history-panel:after {
+    position: fixed;
+    top: -50%;
+    left: -100%;
+    z-index: -1;
+    content: '';
+    width: 300vw;
+    height: 300vh;
+    background-color: #0008;
+}
 
-    #history-panel section {
-        padding: 1rem;
-    }
+#history-panel section {
+    padding: 1rem;
+}
 
 #history-body {
     max-height: calc(70vh - 8rem);
@@ -150,9 +150,9 @@ x-item {
     cursor: pointer;
 }
 
-    #history-exit:hover {
-        background: var(--exit-hover);
-    }
+#history-exit:hover {
+    background: var(--exit-hover);
+}
 
 #history-header {
     margin-bottom: 1rem;
@@ -171,10 +171,10 @@ x-item {
     font-size: 20pt;
 }
 
-    #title img {
-        width: 50px;
-        height: auto;
-    }
+#title img {
+    width: 50px;
+    height: auto;
+}
 
 #title-block {
     display: flex;
@@ -189,125 +189,139 @@ x-item {
     background-color: var(--gray-dark);
 }
 
-    #toc nav {
-        position: fixed;
-        top: 5.5rem;
-        left: .5rem;
-        padding: 0 .5rem;
-        width: calc(var(--toc-width) - 1rem);
-        height: calc(100% - 8rem);
-        overflow: hidden;
-        overflow-y: auto;
-    }
-
-    #toc a {
-        display: list-item;
-        margin: .5rem 1rem;
-        font-size: .8rem;
-        text-decoration: underline;
-        cursor: pointer;
-    }
-
-    #toc a:hover {
-        font-weight: bolder;
-    }
-
-    #toc summary {
-        cursor: pointer;
-        user-select: none;
-    }
-
-#filter-panel {
+#toc nav {
     position: fixed;
-    z-index: 2;
+    top: 5.5rem;
+    left: .5rem;
+    padding: 0 .5rem;
+    width: calc(var(--toc-width) - 1rem);
+    height: calc(100% - 8rem);
+    overflow: hidden;
+    overflow-y: auto;
+}
+
+#toc a {
+    display: list-item;
+    margin: .5rem 1rem;
+    font-size: .8rem;
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+#toc a:hover {
+    font-weight: bolder;
+}
+
+#toc summary {
+    cursor: pointer;
+    user-select: none;
+}
+
+#filter-widget {
+    display: flex;
+    align-items: center;
+
+    position: fixed;
+    z-index: 1;
     bottom: 2.5rem;
     left: .5rem;
-    height: 1.5rem;
-    width: calc(var(--toc-width) - 1rem);
-    line-height: 0;
-    text-align: center;
-}
-    #filter-panel b {
-        font-size: 10pt;
-    }
 
-#statusFilterDot, #filter-nav span {
+    width: calc(var(--toc-width) - 1rem);
+    height: 1.5rem;
+
+    font-size: .9rem;
+
+    background-color: var(--gray);
+}
+
+#filter-status,
+#filter-nav b:before {
     display: inline-block;
     vertical-align: middle;
     width: 0px;
     height: 0px;
+    margin-right: .25rem;
     padding: calc(var(--status-dot-filter-diameter)/2.5);
+    content: '';
     border-radius: 50%;
-    border: 1px solid #fff;    
+    border: 1px solid #fff;
 }
 
 #filter-nav {
     display: none;
     position: absolute;
     bottom: 1.5rem;
-    left: calc(var(--toc-width)/4);    
+    left: calc(var(--toc-width)/4);
     width: calc(var(--toc-width)/2);
-    padding-bottom: 0.25rem;
+    padding: .25rem;
     text-align: justify;
+    background-color: var(--background);
 }
-    
-    #filter-nav.active {
-        display: block;        
-    }
 
-    #filter-nav > div {
-        padding: 0.25rem 0;
-        cursor: pointer;
-    }
+#filter-nav.active {
+    display: grid;
+    grid-template-columns: auto;
+}
 
-        #filter-nav > div:hover {
-            background: black;
-        }
-
-    #filter-nav span {
-        border: none;
-        padding: calc(var(--status-dot-filter-diameter)/3);
-    }
-
-        #filter-nav div:nth-child(1) span {
-            border: 1px solid #fff;
-        }
-
-        #filter-nav div:nth-child(2) span {
-            background: var(--green);
-        }
-
-        #filter-nav div:nth-child(3) span {
-            background: var(--yellow);
-        }
-
-        #filter-nav div:nth-child(4) span {
-            background: var(--red);
-        }
-
-#status-selection {
-    display: inline-block;
+#filter-nav b {
+    padding: .25rem .5rem;
+    padding: 0.25rem 0;
     cursor: pointer;
 }
 
-#top-link {
+#filter-nav b:hover {
+    background: var(--gray-dark);
+}
+
+#filter-nav b:before {
+    border: none;
+    padding: calc(var(--status-dot-filter-diameter)/3);
+}
+
+.filter-all:before {
+    background-color: var(--gray-light);
+}
+
+.filter-ok:before {
+    background-color: var(--green);
+}
+
+.filter-warning:before {
+    background-color: var(--yellow);
+}
+
+.filter-stopped:before {
+    background-color: var(--red);
+}
+
+#filter-current {
+    position: relative;
+    left: 8ch;
+    text-align: left;
+    cursor: pointer;
+}
+
+#top-widget {
     position: fixed;
-    z-index: 2;
+    z-index: 1;
     bottom: .5rem;
     left: .5rem;
+
     padding: .5rem 1rem;
-    height: 1.5rem;
     width: calc(var(--toc-width) - 1rem);
+    height: 1.5rem;
+
     line-height: 0;
     cursor: pointer;
     border: none;
+
     background-color: var(--gray);
     transition: background-color .05s;
 }
 
-    #top-link:hover {
-        background-color: var(--gray-light);
-    }
+#top-widget:hover {
+    background-color: var(--gray-light);
+}
 
 #save-changes {
     display: block;
@@ -317,9 +331,9 @@ x-item {
     background: none;
 }
 
-    #save-changes:hover {
-        background: var(--hover-bg);
-    }
+#save-changes:hover {
+    background: var(--hover-bg);
+}
 
 #version {
     font-size: .9rem;
@@ -334,18 +348,18 @@ x-item {
     text-align: right;
 }
 
-    .entry:nth-child(odd) {
-        background-color: var(--gray-dark);
-    }
+.entry:nth-child(odd) {
+    background-color: var(--gray-dark);
+}
 
-    .entry p {
-        border: solid 1px var(--font);
-        padding: .25rem;
-    }
+.entry p {
+    border: solid 1px var(--font);
+    padding: .25rem;
+}
 
-        .entry p.note {
-            text-align: left;
-        }
+.entry p.note {
+    text-align: left;
+}
 
 .entry-header {
     font-weight: bold;

@@ -97,16 +97,16 @@ async fn main() -> Result<()> {
             Ok("OK")
         });
 
-    // Ajax History
+    // ajax history
     app.at("history/:id")
         .get(|mut req: tide::Request<State>| async move {
-            // Get the id of item from url.
+            // get item id from URL
             let id = req.param("id").unwrap();
 
-            // Get the entries of the id of item.
+            // get all entries with matching id
             let mut entries = database::collect_item_entries(&mut get_conn(), &id);
 
-            // html String to show on History Panel.
+            // build HTML response
             let mut html_str = String::from("");
             for entry in entries {
                 html_str.push_str(&format!(
