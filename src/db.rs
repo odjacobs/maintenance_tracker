@@ -115,6 +115,13 @@ pub mod database {
         Ok(())
     }
 
+    pub fn test_auth(credentials: &DbCredentials) -> Result<()> {
+        match connect(&credentials) {
+            Ok(_) => Ok(()),
+            Err(e) => Err(e),
+        }
+    }
+
     pub fn update_item(conn: &mut PooledConn, item: &Item) -> Result<()> {
         /// Update an item in the database.
         // TODO: Add GUI options for this part which currently does nothing.

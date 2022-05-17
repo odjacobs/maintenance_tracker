@@ -47,18 +47,37 @@ async fn main() -> Result<()> {
     let credentials_filepath = Path::new(constants::CREDENTIALS_FILE);
 
     let save = args().last() == Some("-s".to_owned());
+    let other = args().last() == Some("-o".to_owned());
 
     let mut conn: PooledConn;
     let mut conn_string: String = String::new();
     let mut credentials: structs::DbCredentials;
 
-    if credentials_filepath.exists() && !save {
+    if credentials_filepath.exists() && !save && !other {
         credentials = serde_json::from_str::<structs::DbCredentials>(
             &std::fs::read_to_string(credentials_filepath).unwrap(),
         )
         .unwrap();
+
+        match database::test_auth(&credentials) {
+            Ok(_) => {}
+            Err(e) => {
+                println!("{}", constants::SAVED_CREDENTIALS_INVALID_MSG);
+                panic!();
+            }
+        }
     } else if save {
-        credentials = structs::DbCredentials::from_prompt();
+        loop {
+            credentials = structs::DbCredentials::from_prompt();
+
+            match database::test_auth(&credentials) {
+                Ok(_) => break,
+                Err(_) => {
+                    println!("{}", constants::CREDENTIALS_INVALID_MSG);
+                    continue;
+                }
+            }
+        }
 
         // store credentials in JSON file
         std::fs::write(
@@ -67,7 +86,17 @@ async fn main() -> Result<()> {
         )
         .unwrap();
     } else {
-        credentials = structs::DbCredentials::from_prompt();
+        loop {
+            credentials = structs::DbCredentials::from_prompt();
+
+            match database::test_auth(&credentials) {
+                Ok(_) => break,
+                Err(_) => {
+                    println!("{}", constants::CREDENTIALS_INVALID_MSG);
+                    continue;
+                }
+            }
+        }
     }
 
     conn = database::connect(&credentials).unwrap();
