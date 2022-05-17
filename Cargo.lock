@@ -1490,6 +1490,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "maintenance_tracker"
+version = "0.1.0"
+dependencies = [
+ "async-std",
+ "dotenv",
+ "mysql",
+ "rpassword",
+ "serde",
+ "serde_json",
+ "tera",
+ "tide",
+ "tide-tera",
+]
+
+[[package]]
 name = "maplit"
 version = "1.0.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2602,21 +2617,6 @@ checksum = "12ec30032b75330e04ef8b00a7b0a7cd29650777bfc5bd74359263581c7bcf53"
 dependencies = [
  "tera",
  "tide",
-]
-
-[[package]]
-name = "tide_test"
-version = "0.1.0"
-dependencies = [
- "async-std",
- "dotenv",
- "mysql",
- "rpassword",
- "serde",
- "serde_json",
- "tera",
- "tide",
- "tide-tera",
 ]
 
 [[package]]

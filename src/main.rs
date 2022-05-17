@@ -1,8 +1,9 @@
 #![allow(unused)]
 
 use std::collections::BTreeMap;
-use std::env::var;
+use std::env::{args, var};
 use std::io;
+use std::path::Path;
 
 use dotenv::dotenv;
 use mysql::{prelude::*, *};
@@ -23,76 +24,70 @@ struct State {
     /// Container for simple runtime data.
     app_title: Option<String>,
     app_version: Option<String>,
-    conn_string: String,
+    db_credentials: structs::DbCredentials,
     tera: Tera,
 }
 
 impl State {
-    fn new(tera_instance: Tera, conn_string: String) -> Self {
+    fn new(tera_instance: Tera, credentials: structs::DbCredentials) -> Self {
         State {
             app_title: None,
             app_version: None,
-            conn_string: conn_string,
+            db_credentials: credentials,
             tera: tera_instance,
         }
     }
 }
 
-fn get_conn(conn_string: &String) -> Result<PooledConn> {
+fn get_conn(credentials: &structs::DbCredentials) -> Result<PooledConn> {
     /// Establish a database connection from environment variables.
-    database::connect(conn_string.clone())
-}
-
-fn get_conn_string() -> String {
-    /// Get user input for database information.
-    println!("Username:");
-    let mut username: String = String::new();
-    io::stdin().read_line(&mut username);
-
-    println!("Password:");
-    let password = read_password().unwrap();
-
-    println!("MySQL URL:");
-    let mut url: String = String::new();
-    io::stdin().read_line(&mut url);
-
-    println!("Database Name:");
-    let mut name: String = String::new();
-    io::stdin().read_line(&mut name);
-
-    format!(
-        "mysql://{}:{}@{}/{}",
-        username.trim(),
-        password.trim(),
-        url.trim(),
-        name.trim(),
-    )
+    match database::connect(credentials) {
+        Ok(conn) => Ok(conn),
+        Err(e) => Err(e),
+    }
 }
 
 #[async_std::main]
 async fn main() -> Result<()> {
     dotenv().ok();
-
     tide::log::start();
 
-    let mut conn_string: String = String::new();
+    let credentials_filepath = Path::new(constants::CREDENTIALS_FILE);
+
+    let save = args().last() == Some("-s".to_owned());
+
     let mut conn: PooledConn;
+    let mut conn_string: String = String::new();
+    let mut credentials: structs::DbCredentials;
 
-    loop {
-        conn_string = get_conn_string();
-        conn = match get_conn(&conn_string) {
-            Ok(conn) => conn,
-            Err(_) => continue,
-        };
+    // let json_string = std::fs::read_to_string(credentials_filepath).unwrap();
+    // credentials = serde_json::from_str::<structs::DbCredentials>(json_string.clone()).unwrap();
 
-        break;
+    if credentials_filepath.exists() && !save {
+        credentials = serde_json::from_str::<structs::DbCredentials>(
+            &std::fs::read_to_string(credentials_filepath).unwrap(),
+        )
+        .unwrap();
+    } else if save {
+        credentials = structs::DbCredentials::from_prompt();
+
+        // store credentials in JSON file
+        std::fs::write(
+            format!("{}", constants::CREDENTIALS_FILE),
+            serde_json::to_string_pretty(&credentials).unwrap(),
+        )
+        .unwrap();
+    } else {
+        credentials = structs::DbCredentials::from_prompt();
     }
+
+    conn = database::connect(&credentials).unwrap();
 
     // we're using tera for templating
     let mut tera = Tera::new("templates/**/*").expect("Error parsing templates directory.");
     tera.autoescape_on(vec!["html"]);
 
-    let mut state = State::new(tera, conn_string.clone());
+    let mut state = State::new(tera, credentials);
     let mut app = tide::with_state(state);
 
     // get existing database items
@@ -105,8 +100,7 @@ async fn main() -> Result<()> {
         .get(|req: tide::Request<State>| async move {
             /// Get information from the database.
             let tera = req.state().tera.clone();
-            let conn_string = req.state().conn_string.clone();
-            let mut c = get_conn(&conn_string).unwrap();
+            let mut c = get_conn(&req.state().db_credentials).unwrap();
 
             tera.render_response(
                 "index.html",
@@ -122,10 +116,9 @@ async fn main() -> Result<()> {
             /// Update information in the database.
             let req_string = req.body_string().await?;
             let items = functions::parse_json_string(req_string);
-            let conn_string = req.state().conn_string.clone();
 
             for (id, item) in items {
-                database::update_item(&mut get_conn(&conn_string).unwrap(), &item)?;
+                database::update_item(&mut get_conn(&req.state().db_credentials).unwrap(), &item)?;
             }
 
             Ok("OK")
@@ -136,11 +129,12 @@ async fn main() -> Result<()> {
         .get(|mut req: tide::Request<State>| async move {
             // get item id from URL
             let id = req.param("id").unwrap();
-            let conn_string = req.state().conn_string.clone();
 
             // get all entries with matching id
-            let mut entries =
-                database::collect_item_entries(&mut get_conn(&conn_string.clone()).unwrap(), &id);
+            let mut entries = database::collect_item_entries(
+                &mut get_conn(&req.state().db_credentials).unwrap(),
+                &id,
+            );
 
             // build HTML response
             let mut html_str = String::from("");

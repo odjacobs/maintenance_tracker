@@ -5,7 +5,7 @@ pub mod database {
 
     use mysql::{prelude::*, *};
 
-    use crate::core::structs::{Category, Entry, Item, ItemDetails};
+    use crate::core::structs::{Category, DbCredentials, Entry, Item, ItemDetails};
 
     pub fn collect_categories(conn: &mut PooledConn) -> Vec<Category> {
         /// Get all categories from the database.
@@ -55,9 +55,9 @@ pub mod database {
         entries
     }
 
-    pub fn connect(url: String) -> Result<mysql::PooledConn> {
+    pub fn connect(credentials: &DbCredentials) -> Result<mysql::PooledConn> {
         /// Get options from url and create a pooled connection
-        let opts = Opts::from_url(&url)?;
+        let opts = Opts::from_url(&credentials.mysql_url())?;
         let pool = Pool::new(opts)?;
 
         Ok(pool.get_conn()?)
