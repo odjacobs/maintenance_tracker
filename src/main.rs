@@ -39,14 +39,6 @@ impl State {
     }
 }
 
-fn get_conn(credentials: &structs::DbCredentials) -> Result<PooledConn> {
-    /// Establish a database connection from environment variables.
-    match database::connect(credentials) {
-        Ok(conn) => Ok(conn),
-        Err(e) => Err(e),
-    }
-}
-
 #[async_std::main]
 async fn main() -> Result<()> {
     dotenv().ok();
@@ -59,9 +51,6 @@ async fn main() -> Result<()> {
     let mut conn: PooledConn;
     let mut conn_string: String = String::new();
     let mut credentials: structs::DbCredentials;
-
-    // let json_string = std::fs::read_to_string(credentials_filepath).unwrap();
-    // credentials = serde_json::from_str::<structs::DbCredentials>(json_string.clone()).unwrap();
 
     if credentials_filepath.exists() && !save {
         credentials = serde_json::from_str::<structs::DbCredentials>(
@@ -100,7 +89,7 @@ async fn main() -> Result<()> {
         .get(|req: tide::Request<State>| async move {
             /// Get information from the database.
             let tera = req.state().tera.clone();
-            let mut c = get_conn(&req.state().db_credentials).unwrap();
+            let mut c = database::connect(&req.state().db_credentials).unwrap();
 
             tera.render_response(
                 "index.html",
@@ -118,7 +107,10 @@ async fn main() -> Result<()> {
             let items = functions::parse_json_string(req_string);
 
             for (id, item) in items {
-                database::update_item(&mut get_conn(&req.state().db_credentials).unwrap(), &item)?;
+                database::update_item(
+                    &mut database::connect(&req.state().db_credentials).unwrap(),
+                    &item,
+                )?;
             }
 
             Ok("OK")
@@ -132,7 +124,7 @@ async fn main() -> Result<()> {
 
             // get all entries with matching id
             let mut entries = database::collect_item_entries(
-                &mut get_conn(&req.state().db_credentials).unwrap(),
+                &mut database::connect(&req.state().db_credentials).unwrap(),
                 &id,
             );
 

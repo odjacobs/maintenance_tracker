@@ -60,7 +60,10 @@ pub mod database {
         let opts = Opts::from_url(&credentials.mysql_url())?;
         let pool = Pool::new(opts)?;
 
-        Ok(pool.get_conn()?)
+        match pool.get_conn() {
+            Ok(conn) => Ok(conn),
+            Err(e) => Err(e),
+        }
     }
 
     // TODO: Add GUI options for this function which is currently unused.
