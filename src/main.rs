@@ -21,7 +21,7 @@ use db::database;
 
 #[derive(Clone, Debug)]
 struct State {
-    /// Container for simple runtime data.
+    /// Container for basic runtime data.
     app_title: Option<String>,
     app_version: Option<String>,
     db_credentials: structs::DbCredentials,
