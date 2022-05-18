@@ -24,19 +24,44 @@ struct State {
     /// Container for basic runtime data.
     app_title: Option<String>,
     app_version: Option<String>,
+    config: structs::Config,
     db_credentials: structs::DbCredentials,
     tera: Tera,
 }
 
 impl State {
-    fn new(tera_instance: Tera, credentials: structs::DbCredentials) -> Self {
+    fn new(
+        tera_instance: Tera,
+        config: structs::Config,
+        credentials: structs::DbCredentials,
+    ) -> Self {
         State {
             app_title: None,
             app_version: None,
+            config: config,
             db_credentials: credentials,
             tera: tera_instance,
         }
     }
+}
+
+fn read_json<T>(filepath: &Path) -> T
+where
+    T: serde::Serialize,
+    T: serde::de::DeserializeOwned,
+{
+    serde_json::from_str::<T>(&std::fs::read_to_string(filepath).unwrap()).unwrap()
+}
+
+fn write_json<T>(object: &T, filename: &str)
+where
+    T: serde::Serialize,
+{
+    std::fs::write(
+        format!("{}", filename),
+        serde_json::to_string_pretty(object).unwrap(),
+    )
+    .unwrap();
 }
 
 #[async_std::main]
@@ -44,6 +69,7 @@ async fn main() -> Result<()> {
     dotenv().ok();
     tide::log::start();
 
+    let config_filepath = Path::new(constants::CONFIG_FILE);
     let credentials_filepath = Path::new(constants::CREDENTIALS_FILE);
 
     let save = args().last() == Some("-s".to_owned());
@@ -51,13 +77,22 @@ async fn main() -> Result<()> {
 
     let mut conn: PooledConn;
     let mut conn_string: String = String::new();
+    let mut config: structs::Config;
     let mut credentials: structs::DbCredentials;
 
+    if config_filepath.exists() {
+        // if a config file exists, read it
+        config = read_json::<structs::Config>(&config_filepath);
+    } else {
+        // write a config file if one doesn't exist
+        config = structs::Config::from_prompt();
+
+        write_json(&config, constants::CONFIG_FILE);
+    }
+
     if credentials_filepath.exists() && !save && !other {
-        credentials = serde_json::from_str::<structs::DbCredentials>(
-            &std::fs::read_to_string(credentials_filepath).unwrap(),
-        )
-        .unwrap();
+        // if credentials file exists and no flags are passed
+        credentials = read_json::<structs::DbCredentials>(&credentials_filepath);
 
         match database::test_auth(&credentials) {
             Ok(_) => {}
@@ -67,7 +102,9 @@ async fn main() -> Result<()> {
             }
         }
     } else if save {
+        // if `-s` flag is passed, overwrite existing configuration & credentials
         loop {
+            config = structs::Config::from_prompt();
             credentials = structs::DbCredentials::from_prompt();
 
             match database::test_auth(&credentials) {
@@ -79,14 +116,12 @@ async fn main() -> Result<()> {
             }
         }
 
-        // store credentials in JSON file
-        std::fs::write(
-            format!("{}", constants::CREDENTIALS_FILE),
-            serde_json::to_string_pretty(&credentials).unwrap(),
-        )
-        .unwrap();
+        write_json(&config, constants::CONFIG_FILE);
+        write_json(&credentials, constants::CREDENTIALS_FILE);
     } else {
+        // if `-o` flag is passed, get other configuration settings
         loop {
+            config = structs::Config::from_prompt();
             credentials = structs::DbCredentials::from_prompt();
 
             match database::test_auth(&credentials) {
@@ -101,11 +136,14 @@ async fn main() -> Result<()> {
 
     conn = database::connect(&credentials).unwrap();
 
+    // get a clone of config.port for use in launching the application
+    let port = config.port.clone();
+
     // we're using tera for templating
     let mut tera = Tera::new("templates/**/*").expect("Error parsing templates directory.");
     tera.autoescape_on(vec!["html"]);
 
-    let mut state = State::new(tera, credentials);
+    let mut state = State::new(tera, config, credentials);
     let mut app = tide::with_state(state);
 
     // get existing database items
@@ -180,7 +218,7 @@ async fn main() -> Result<()> {
         });
 
     // run the application
-    app.listen("127.0.0.1:8000").await?;
+    app.listen(format!("0.0.0.0:{}", port)).await?;
 
     Ok(())
 }

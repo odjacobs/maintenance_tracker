@@ -31,6 +31,40 @@ pub mod structs {
     }
 
     #[derive(Clone, Debug, Serialize, Deserialize)]
+    pub struct Config {
+        pub port: u32,
+    }
+
+    impl Config {
+        pub fn from_prompt() -> Self {
+            let mut port_int: u32 = 80;
+
+            loop {
+                println!("Port (Default=80):");
+                let mut port_string = String::new();
+                io::stdin().read_line(&mut port_string);
+
+                if port_string.trim() == "" {
+                    break;
+                }
+
+                match port_string.trim().parse::<u32>() {
+                    Ok(port) => {
+                        port_int = port;
+                        break;
+                    }
+                    Err(e) => {
+                        println!("{}", e);
+                        continue;
+                    }
+                }
+            }
+
+            Config { port: port_int }
+        }
+    }
+
+    #[derive(Clone, Debug, Serialize, Deserialize)]
     pub struct DbCredentials {
         pub user: String,
         pub pass: String,
@@ -42,18 +76,18 @@ pub mod structs {
         pub fn from_prompt() -> Self {
             /// Get user input for database information.
             println!("Username:");
-            let mut username: String = String::new();
+            let mut username = String::new();
             io::stdin().read_line(&mut username);
 
             println!("Password:");
             let password = read_password().unwrap();
 
             println!("MySQL URL:");
-            let mut url: String = String::new();
+            let mut url = String::new();
             io::stdin().read_line(&mut url);
 
             println!("Database Name:");
-            let mut name: String = String::new();
+            let mut name = String::new();
             io::stdin().read_line(&mut name);
 
             DbCredentials {
