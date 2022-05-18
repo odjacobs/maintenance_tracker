@@ -5,7 +5,7 @@ pub mod database {
 
     use mysql::{prelude::*, *};
 
-    use crate::core::structs::{Category, Entry, Item, ItemDetails};
+    use crate::core::structs::{Category, DbCredentials, Entry, Item, ItemDetails};
 
     pub fn collect_categories(conn: &mut PooledConn) -> Vec<Category> {
         /// Get all categories from the database.
@@ -55,12 +55,15 @@ pub mod database {
         entries
     }
 
-    pub fn connect(url: String) -> Result<mysql::PooledConn> {
+    pub fn connect(credentials: &DbCredentials) -> Result<mysql::PooledConn> {
         /// Get options from url and create a pooled connection
-        let opts = Opts::from_url(&url)?;
+        let opts = Opts::from_url(&credentials.mysql_url())?;
         let pool = Pool::new(opts)?;
 
-        Ok(pool.get_conn()?)
+        match pool.get_conn() {
+            Ok(conn) => Ok(conn),
+            Err(e) => Err(e),
+        }
     }
 
     // TODO: Add GUI options for this function which is currently unused.
@@ -110,6 +113,13 @@ pub mod database {
         item.id = Some(auto_incremented_id);
 
         Ok(())
+    }
+
+    pub fn test_auth(credentials: &DbCredentials) -> Result<()> {
+        match connect(&credentials) {
+            Ok(_) => Ok(()),
+            Err(e) => Err(e),
+        }
     }
 
     pub fn update_item(conn: &mut PooledConn, item: &Item) -> Result<()> {

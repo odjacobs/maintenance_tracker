@@ -45,15 +45,26 @@ class Item extends HTMLElement {
         // styles
         const wrapperStyle = {
             "display": "flex",
+            "flex-wrap": "wrap",
             "align-items": "center",
-            "gap": "1rem",
+            "justify-content": "center",
+            "gap": ".5rem 1rem",
             "margin": "0 auto",
-            "padding": ".5rem 10%",
-            "width": "80%",
+            "padding": ".5rem 2rem",
+            "max-width": "100%",
             "background-color": "var(--background)",
         };
 
+        const groupStyle = {
+            "display": "flex",
+            "gap": ".5rem",
+            "align-items": "center",
+            "justify-content": "flex-end",
+            "margin": "0 .5rem",
+        };
+
         const titleStyle = {
+            "margin": "0",
             "width": "25ch",
             "text-align": "right",
         }
@@ -62,15 +73,10 @@ class Item extends HTMLElement {
             "display": "block",
             "width": "0",
             "height": "0",
+            "margin-left": "1rem",
             "padding": "calc(var(--status-dot-diameter)/2)",
             "border-radius": "50%",
             "cursor": "pointer",
-        };
-
-        const costDetailsStyle = {
-            "display": "flex",
-            "align-items": "baseline",
-            "margin": "0 .5rem",
         };
 
         const costInputStyle = {
@@ -89,37 +95,49 @@ class Item extends HTMLElement {
             "max-width": "79ch",
         }
 
-        const linkStyle = { "cursor": "pointer" };
+        const linkStyle = {
+            "display": "inline-block",
+            "margin": "0 .5rem",
+            "cursor": "pointer",
+        };
 
         this.wrapper = document.createElement("span");
         Object.assign(this.wrapper.style, wrapperStyle);
 
+        // links
+        this.links = document.createElement("span");
+        Object.apply(this.links.style, groupStyle);
+
         // hide link (only shown if this.visible == "true")
-        this.hideLink = this.wrapper.appendChild(document.createElement("a"));
+        this.hideLink = this.links.appendChild(document.createElement("a"));
         this.hideLink.innerHTML = "Hide";
         this.hideLink.onclick = () => this.setVisible(false);
         Object.assign(this.hideLink.style, linkStyle);
 
         // unhide link (only shown if this.visible == "false")
-        this.unhideLink = this.wrapper.appendChild(document.createElement("a"));
+        this.unhideLink = this.links.appendChild(document.createElement("a"));
         this.unhideLink.innerHTML = "Unhide";
         this.unhideLink.onclick = () => this.setVisible(true);
         Object.assign(this.unhideLink.style, linkStyle);
 
+        // item title & status indicator
+        const itemDetails = this.wrapper.appendChild(document.createElement("span"));
+        Object.assign(itemDetails.style, groupStyle);
+
         // item title
-        const title = this.wrapper.appendChild(document.createElement("p"));
+        const title = itemDetails.appendChild(document.createElement("p"));
         title.textContent = this.hasAttribute("title") ? this.getAttribute("title") : "";
         Object.assign(title.style, titleStyle);
 
         // item status indicator dot
-        const statusDot = this.wrapper.appendChild(document.createElement("span"));
+        const statusDot = itemDetails.appendChild(document.createElement("span"));
         statusDot.onclick = (o) => this.nextStatusDotColor(o);
         Object.assign(statusDot.style, statusDotStyle);
         this.setStatusDotColor(statusDot);
 
-        // item status details (description selector, cost input)
+        // item cost details (cost label & input)
         const costDetails = this.wrapper.appendChild(document.createElement("span"));
-        Object.assign(costDetails.style, costDetailsStyle);
+        Object.assign(costDetails.style, groupStyle);
 
         // label that displays text "Est. Repair Cost:"
         const lblRepairCost = costDetails.appendChild(
@@ -147,7 +165,7 @@ class Item extends HTMLElement {
         Object.assign(note.style, noteStyle);
 
         // history link
-        const history = this.wrapper.appendChild(document.createElement("a"));
+        const history = this.links.appendChild(document.createElement("a"));
         history.innerHTML = "History";
         history.onclick = () => getHistory(this.id);
         Object.assign(history.style, linkStyle);
@@ -155,6 +173,7 @@ class Item extends HTMLElement {
         // history button event
         history.onclick = () => displayHistoryPanel(this);
 
+        this.wrapper.appendChild(this.links);
         this.setHideLink(this.visible == "true");
         this.shadowRoot.append(this.wrapper);
 
@@ -197,12 +216,12 @@ class Item extends HTMLElement {
 
     setHideLink(value) {
         if (value) {
-            this.wrapper.appendChild(this.hideLink);
-            this.wrapper.removeChild(this.unhideLink);
+            this.links.appendChild(this.hideLink);
+            this.links.removeChild(this.unhideLink);
         }
         else {
-            this.wrapper.appendChild(this.unhideLink);
-            this.wrapper.removeChild(this.hideLink);
+            this.links.appendChild(this.unhideLink);
+            this.links.removeChild(this.hideLink);
         }
     }
 

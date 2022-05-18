@@ -1,5 +1,5 @@
 [package]
-name = "tide_test"
+name = "maintenance_tracker"
 version = "0.1.0"
 edition = "2021"
 
@@ -8,8 +8,8 @@ edition = "2021"
 [dependencies]
 async-std = {version = "1.6.0", features = ["attributes"]}
 dotenv = "0.15.0"
-dotenv_codegen = "0.15.0"
 mysql = "22.1.0"
+rpassword = "6.0.1"
 serde = "1.0.136"
 serde_json = "1.0.59"
 tera = "1.15.0"

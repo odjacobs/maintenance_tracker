@@ -2,9 +2,11 @@
 
 pub mod structs {
     use std::collections::HashMap;
+    use std::io;
 
     use mysql::prelude::*;
     use mysql::{FromRowError, FromValueError, Row, Value};
+    use rpassword::read_password;
     use serde::{Deserialize, Serialize};
 
     #[derive(serde::Serialize, Debug, PartialEq, Eq)]
@@ -25,6 +27,48 @@ pub mod structs {
             };
 
             Ok(result)
+        }
+    }
+
+    #[derive(Clone, Debug, Serialize, Deserialize)]
+    pub struct DbCredentials {
+        pub user: String,
+        pub pass: String,
+        pub db_url: String,
+        pub db_name: String,
+    }
+
+    impl DbCredentials {
+        pub fn from_prompt() -> Self {
+            /// Get user input for database information.
+            println!("Username:");
+            let mut username: String = String::new();
+            io::stdin().read_line(&mut username);
+
+            println!("Password:");
+            let password = read_password().unwrap();
+
+            println!("MySQL URL:");
+            let mut url: String = String::new();
+            io::stdin().read_line(&mut url);
+
+            println!("Database Name:");
+            let mut name: String = String::new();
+            io::stdin().read_line(&mut name);
+
+            DbCredentials {
+                user: username.trim().to_owned(),
+                pass: password.trim().to_owned(),
+                db_url: url.trim().to_owned(),
+                db_name: name.trim().to_owned(),
+            }
+        }
+
+        pub fn mysql_url(&self) -> String {
+            format!(
+                "mysql://{}:{}@{}/{}",
+                self.user, self.pass, self.db_url, self.db_name,
+            )
         }
     }
 
