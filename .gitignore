@@ -1,4 +1,5 @@
 /.vs
 /target
 .env
+config.json
 credentials.json
