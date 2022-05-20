@@ -1,0 +1,23 @@
+name: Database Error
+description: Data not saving correctly
+labels: [db-error]
+body: 
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+      description: What happened?
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+      description: What was supposed to happen?
+    validations:
+      required: true
+  - type: textarea
+    id: other
+    attributes:
+      label: Other informations
+      description: Screenshots, suggested fixes, other information, etc.
