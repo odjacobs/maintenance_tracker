@@ -19,5 +19,5 @@ body:
   - type: textarea
     id: other
     attributes:
-      label: Other informations
+      label: Other information
       description: Screenshots, suggested fixes, other information, etc.
