@@ -22,8 +22,8 @@ body:
       label: Fixed on refresh
       description: Does the program work as expected after a refresh?
       options:
-        - Yes
-        - No
+        - 'Yes'
+        - 'No'
         - Don't know
     validations:
       required: true
