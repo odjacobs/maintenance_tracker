@@ -1,0 +1,34 @@
+name: Interface Error
+description: Interface not behaving correctly
+labels: [ui-error]
+body: 
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+      description: What happened?
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+      description: What was supposed to happen?
+    validations:
+      required: true
+  - type: dropdown
+    id: refresh-fix
+    attributes:
+      label: Fixed on refresh
+      description: Does the program work as expected after a refresh?
+      options:
+        - Yes
+        - No
+        - Don't know
+    validations:
+      required: true
+  - type: textarea
+    id: other
+    attributes:
+      label: Other informations
+      description: Screenshots, suggested fixes, other information, etc.
