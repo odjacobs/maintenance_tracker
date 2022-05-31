@@ -298,6 +298,18 @@ function collectChanges() {
     return changedItems;
 }
 
+function displayAddPanel() {
+    addPanel.classList.add("active");
+
+    for (const input of addPanel.querySelectorAll("input[type=radio]")) {
+        input.checked = false;
+    }
+
+    for (const fieldset of addPanel.querySelectorAll("fieldset")) {
+        fieldset.disabled = true;
+    }
+}
+
 function displayHistoryPanel(item) {
     if (!historyPanel.classList.contains("active")) {
         const xhr = new XMLHttpRequest();
@@ -319,8 +331,8 @@ function displayHistoryPanel(item) {
     historyPanel.classList.add("active");
 }
 
-function exitHistoryPanel() {
-    historyPanel.classList.remove("active");
+function exitPanel(caller) {
+    caller.parentNode.classList.remove("active");
 }
 
 function postChanges(items) {
@@ -410,6 +422,50 @@ function filterItemsByStatus(type) {
     });
 }
 
+function formSubmit(form) {
+    form_is_valid = true;
+
+    let fields = Object.values(
+        form.firstElementChild.querySelectorAll("input, select")
+    ).reduce((obj, field) => {
+        // parse input values into an object
+
+        if (field.value == "-1") {
+            alert("Field cannot be empty.");
+            form_is_valid = false;
+            return;
+        }
+
+        if (/^\d+$/.test(field.value)) {
+            // if value is a number, parse as integer
+            obj[field.name] = parseInt(field.value);
+        } else {
+            obj[field.name] = field.value;
+        }
+
+        return obj;
+    }, {});
+
+    if (!form_is_valid) {
+        return;
+    }
+
+    console.log(form.action, fields);
+    let xhr = new XMLHttpRequest();
+
+    xhr.open("POST", form.action);
+    xhr.setRequestHeader("Accept", "application/json");
+    xhr.setRequestHeader("Content-Type", "application/json");
+
+    // log response to the console
+    xhr.onload = () => {
+        console.log(xhr.response);
+        window.location.reload();
+    }
+
+    xhr.send(JSON.stringify(fields));
+}
+
 function scrollToCategory(categoryID) {
     // scroll to the requested category
     document.getElementById("cat-" + categoryID).scrollIntoView();
@@ -420,6 +476,15 @@ function scrollToTop() {
     window.scrollTo(0, 0);
 }
 
+function toggleAddSection(selected) {
+    // toggle the selected section of the add panel
+    addCategory.parentNode.nextElementSibling.firstElementChild.disabled = selected != addCategory;
+    addItem.parentNode.nextElementSibling.firstElementChild.disabled = selected != addItem;
+}
+
+const addPanel = document.getElementById("add-panel");
+const addCategory = document.getElementById("add-category");
+const addItem = document.getElementById("add-item");
 const hiddenItems = document.getElementById("hidden-items");
 const historyPanel = document.getElementById("history-panel");
 const historyBody = document.getElementById("history-body");
@@ -427,16 +492,27 @@ const historyHeader = document.getElementById("history-header");
 const filterStatus = document.getElementById("filter-status");
 const filterCurrent = document.getElementById("filter-current");
 
+const forms = document.querySelectorAll("form");
+for (const form of forms) {
+    form.addEventListener("submit", (e) => {
+        e.preventDefault();
+        formSubmit(form);
+    });
+}
+
 // define custom x-item HTMLElement
 const categories = Array.from(document.querySelectorAll('[id^="cat-"]'));
 const items = Array.from(document.getElementsByTagName("x-item"));
 window.customElements.define("x-item", Item);
 
 // call function to save the changes
-document.getElementById("save-changes").onclick = saveChanges;
+document.getElementById("link-save").onclick = saveChanges;
 
 // hide/unhide filter-nav
 document.getElementById("filter-widget").onmouseover = () => document.getElementById("filter-nav").classList.add("active");
 document.getElementById("filter-widget").onmouseout = () => document.getElementById("filter-nav").classList.remove("active");
 document.getElementById("filter-nav").onmouseover = () => document.getElementById("filter-nav").classList.add("active");
 document.getElementById("filter-nav").onmouseout = () => document.getElementById("filter-nav").classList.remove("active");
+
+addCategory.onclick = () => toggleAddSection(addCategory);
+addItem.onclick = () => toggleAddSection(addItem);

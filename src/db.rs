@@ -9,7 +9,7 @@ pub mod database {
 
     pub fn collect_categories(conn: &mut PooledConn) -> Vec<Category> {
         /// Get all categories from the database.
-        conn.query("SELECT * FROM category").unwrap()
+        conn.query("SELECT * FROM category ORDER BY title").unwrap()
     }
 
     pub fn collect_items(conn: &mut PooledConn) -> BTreeMap<u32, Item> {
@@ -20,7 +20,7 @@ pub mod database {
         // get vector of most recent entries for each item
         let mut details_list: Vec<ItemDetails> = Vec::new();
         for item in items.iter() {
-            let details: ItemDetails = conn
+            let details: ItemDetails = match conn
                 .exec_first(
                     r"
                     SELECT cost, note, status, visible
@@ -31,7 +31,10 @@ pub mod database {
                     },
                 )
                 .unwrap()
-                .unwrap();
+            {
+                Some(details) => details,
+                None => ItemDetails::new(),
+            };
 
             details_list.push(details);
         }
@@ -66,36 +69,56 @@ pub mod database {
         }
     }
 
+    pub fn get_autoincremented_id(conn: &mut PooledConn, table_name: &str) -> u32 {
+        /// Get the autoincremented id of the last inserted row.
+        let new_id: u32 = conn
+            .query(format!(
+                "SELECT id FROM {} ORDER BY id DESC LIMIT 1",
+                table_name
+            ))
+            .unwrap()[0];
+        // update original item's id
+
+        new_id
+    }
+
     // TODO: Add GUI options for this function which is currently unused.
     pub fn insert_category(conn: &mut PooledConn, title: &str) -> Result<()> {
         /// Insert a category into the database.
         conn.query_drop(format!("INSERT INTO category (title) VALUES ('{}')", title))
     }
 
-    // TODO: Add GUI options for this function which is currently unused.
     pub fn insert_item(conn: &mut PooledConn, item: &mut Item) -> Result<()> {
         /// Insert an item into the database.
         let details = item.details.as_ref().unwrap();
+        println!("{:?}", details);
 
         conn.exec_drop(
             r"INSERT INTO item (title, category_id)
             VALUES (
                 :title,
-                :category_id,
-                :cost
+                :category_id
             );
-            
-            INSERT INTO entry (item_id, cost, note, status, visible)
+            ",
+            params! {
+                "title" => &item.title,
+                "category_id" => item.category_id,
+            },
+        )?;
+
+        item.id = Some(get_autoincremented_id(conn, "item"));
+
+        conn.exec_drop(
+            r"INSERT INTO entry (item_id, cost, note, status, visible)
             VALUES (
                 :item_id,
                 :cost,
                 :note,
                 :status,
                 :visible
-            )",
+            );
+            ",
             params! {
-                "title" => &item.title,
-                "category_id" => item.category_id,
                 "item_id" => item.id,
                 "cost" => details.cost,
                 "note" => &details.note,
@@ -104,15 +127,19 @@ pub mod database {
             },
         )?;
 
-        // get ID of new item
-        let auto_incremented_id: u32 = conn
-            .query("SELECT id FROM item ORDER BY id DESC LIMIT 1")
-            .unwrap()[0];
-
-        // update original item's id
-        item.id = Some(auto_incremented_id);
-
         Ok(())
+    }
+
+    pub fn title_exists(conn: &mut PooledConn, title: &str, db_name: &str) -> bool {
+        /// Check if a title already exists in the database.
+        let mut result: Vec<u32> = conn
+            .query(format!(
+                "SELECT id FROM {} WHERE title = '{}'",
+                db_name, title
+            ))
+            .unwrap();
+
+        result.len() > 0
     }
 
     pub fn test_auth(credentials: &DbCredentials) -> Result<()> {

@@ -22,12 +22,15 @@
             <p id="version">{{ app_version }}</p>
         </div>
 
-        <a id="save-changes">Save Changes</a>
+        <div class="action-links">
+            <a id="link-add" class="btn" onclick="displayAddPanel()">Add</a>
+            <a id="link-save" class="btn">Save Changes</a>
+        </div>
     </header>
 
-    <article id="history-panel">
-        <h3 id="history-title">History</h3>
-        <button id="history-exit" onclick="exitHistoryPanel()">&times;</button>
+    <article id="history-panel" class="popover">
+        <h3 class="popover-title">History</h3>
+        <button class="popover-exit" onclick="exitPanel(this)"></button>
         <section>
             <h3 id="history-header"></h3>
             <div class="entry entry-header">
@@ -38,6 +41,44 @@
             </div>
             <div id="history-body"></div>
         </section>
+    </article>
+
+    <article id="add-panel" class="popover">
+        <h3 class="popover-title">Add</h3>
+        <button class="popover-exit" onclick="exitPanel(this)"></button>
+
+        <div id="add-body">
+            <div class="add-section">
+                <input type="radio" name="add-selected" id="add-category" selected>
+                <p>New Category</p>
+            </div>
+            <form action="/new/category" method="post">
+                <fieldset disabled>
+                    <label for="title" class="required-field">Title</label>
+                    <input type="text" name="title" required>
+                    <button type="submit" class="btn">Add</button>
+                </fieldset>
+            </form>
+
+            <div class="add-section">
+                <input type="radio" name="add-selected" id="add-item">
+                <p>New Item</p>
+            </div>
+            <form action="/new/item" method="post">
+                <fieldset disabled>
+                    <label for="title" class="required-field">Title</label>
+                    <input type="text" name="title" required>
+                    <label for="category_id" class="required-field">Category</label>
+                    <select name="category_id" required>
+                        <option value="-1" selected disabled>Select a Category</option>
+                        {% for category in categories %}
+                        <option value="{{category.id}}">{{category.title}}</option>
+                        {% endfor %}
+                    </select>
+                    <button type="submit" class="btn">Add</button>
+                </fieldset>
+            </form>
+        </div>
     </article>
 
     <div id="filter-widget">

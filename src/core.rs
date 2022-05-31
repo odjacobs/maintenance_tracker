@@ -9,11 +9,17 @@ pub mod structs {
     use rpassword::read_password;
     use serde::{Deserialize, Serialize};
 
-    #[derive(serde::Serialize, Debug, PartialEq, Eq)]
+    #[derive(serde::Serialize, serde::Deserialize, Debug, PartialEq, Eq)]
     pub struct Category {
         /// Category for sorting items.
-        pub id: u32,
+        pub id: Option<u32>,
         pub title: String,
+    }
+
+    impl Category {
+        pub fn new(title: String) -> Self {
+            Category { id: None, title }
+        }
     }
 
     impl FromRow for Category {
@@ -175,6 +181,17 @@ pub mod structs {
         pub note: Option<String>,
         pub status: u8,
         pub visible: bool,
+    }
+
+    impl ItemDetails {
+        pub fn new() -> ItemDetails {
+            ItemDetails {
+                cost: None,
+                note: None,
+                status: 0,
+                visible: true,
+            }
+        }
     }
 
     impl FromRow for ItemDetails {

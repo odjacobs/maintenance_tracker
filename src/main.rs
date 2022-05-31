@@ -217,6 +217,33 @@ async fn main() -> Result<()> {
             Ok(html_str)
         });
 
+    app.at("new/category")
+        .post(|mut req: tide::Request<State>| async move {
+            let mut c = database::connect(&req.state().db_credentials).unwrap();
+            let category = serde_json::from_str::<structs::Category>(&req.body_string().await?)?;
+
+            database::insert_category(&mut c, &category.title)?;
+
+            Ok("OK")
+        });
+
+    app.at("new/item")
+        .post(|mut req: tide::Request<State>| async move {
+            let mut c = database::connect(&req.state().db_credentials).unwrap();
+            let mut item = serde_json::from_str::<structs::Item>(&req.body_string().await?)?;
+            item.details = Some(structs::ItemDetails::new());
+
+            if database::title_exists(&mut c, &item.title, "item") {
+                return Ok(format!("Item named \"{}\" already exists.", &item.title));
+            }
+
+            println!("{:?}", item);
+
+            database::insert_item(&mut c, &mut item)?;
+
+            Ok("OK".to_owned())
+        });
+
     // run the application
     app.listen(format!("0.0.0.0:{}", port)).await?;
 
