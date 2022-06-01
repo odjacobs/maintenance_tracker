@@ -5,11 +5,12 @@ pub mod database {
 
     use mysql::{prelude::*, *};
 
-    use crate::core::structs::{Category, DbCredentials, Entry, Item, ItemDetails};
+    use crate::core::structs::*;
+    use crate::data::constants::{TABLE_NAME_CATEGORY, TABLE_NAME_ENTRY, TABLE_NAME_ITEM};
 
     pub fn collect_categories(conn: &mut PooledConn) -> Vec<Category> {
         /// Get all categories from the database.
-        conn.query("SELECT * FROM category").unwrap()
+        conn.query("SELECT * FROM category ORDER BY title").unwrap()
     }
 
     pub fn collect_items(conn: &mut PooledConn) -> BTreeMap<u32, Item> {
@@ -20,10 +21,10 @@ pub mod database {
         // get vector of most recent entries for each item
         let mut details_list: Vec<ItemDetails> = Vec::new();
         for item in items.iter() {
-            let details: ItemDetails = conn
+            let details: ItemDetails = match conn
                 .exec_first(
                     r"
-                    SELECT cost, note, status, visible
+                    SELECT cost, note, status, visible, removed
                     FROM entry WHERE item_id = :item_id ORDER BY id DESC
                     ",
                     params! {
@@ -31,7 +32,10 @@ pub mod database {
                     },
                 )
                 .unwrap()
-                .unwrap();
+            {
+                Some(details) => details,
+                None => ItemDetails::new(),
+            };
 
             details_list.push(details);
         }
@@ -66,53 +70,206 @@ pub mod database {
         }
     }
 
-    // TODO: Add GUI options for this function which is currently unused.
-    pub fn insert_category(conn: &mut PooledConn, title: &str) -> Result<()> {
-        /// Insert a category into the database.
-        conn.query_drop(format!("INSERT INTO category (title) VALUES ('{}')", title))
+    pub fn delete_category(conn: &mut PooledConn, id: u32) {
+        /// Delete a category from the database.
+        let result = conn
+            .exec_drop(
+                r"
+                UPDATE category
+                SET removed = 1
+                WHERE id = :id;
+                ",
+                params! {
+                    "id" => id,
+                },
+            )
+            .unwrap();
     }
 
-    // TODO: Add GUI options for this function which is currently unused.
-    pub fn insert_item(conn: &mut PooledConn, item: &mut Item) -> Result<()> {
-        /// Insert an item into the database.
-        let details = item.details.as_ref().unwrap();
-
+    pub fn delete_item(conn: &mut PooledConn, item_id: u32) -> Result<()> {
+        /// Delete a category from the database.
         conn.exec_drop(
-            r"INSERT INTO item (title, category_id)
-            VALUES (
-                :title,
-                :category_id,
-                :cost
-            );
-            
-            INSERT INTO entry (item_id, cost, note, status, visible)
+            r"
+            UPDATE entry
+            SET removed = 1
+            WHERE item_id = :item_id;
+            ",
+            params! {
+                "item_id" => item_id,
+            },
+        )
+    }
+
+    pub fn get_autoincremented_id(conn: &mut PooledConn, table_name: &str) -> u32 {
+        /// Get the autoincremented id of the last inserted row.
+        let new_id: u32 = conn
+            .query(format!(
+                "SELECT id FROM {} ORDER BY id DESC LIMIT 1",
+                table_name
+            ))
+            .unwrap()[0];
+        // update original item's id
+
+        new_id
+    }
+
+    pub fn get_category(conn: &mut PooledConn, id: u32) -> Category {
+        /// Get a category from the database.
+        match conn
+            .exec_first(
+                "SELECT * FROM category WHERE id = :id",
+                params! {
+                    "id" => id,
+                },
+            )
+            .unwrap()
+        {
+            Some(category) => category,
+            None => panic!("No category with id {}", id),
+        }
+    }
+
+    pub fn get_entry(conn: &mut PooledConn, id: u32) -> Entry {
+        match conn
+            .exec_first(
+                r"
+                SELECT cost, note, status, visible, removed
+                FROM entry WHERE item_id = :item_id ORDER BY id DESC
+                ",
+                params! {
+                    "item_id" => id,
+                },
+            )
+            .unwrap()
+        {
+            Some(entry) => entry,
+            None => panic!("No entries with item_id {}", id),
+        }
+    }
+
+    pub fn get_item(conn: &mut PooledConn, id: u32) -> Item {
+        /// Get an item from the database.
+        let item: Option<Item> = conn
+            .exec_first(
+                "SELECT * FROM item WHERE id = :id",
+                params! {
+                    "id" => id,
+                },
+            )
+            .unwrap();
+
+        match item {
+            Some(Item {
+                category_id, title, ..
+            }) => Item {
+                id: Some(id),
+                category_id: category_id,
+                title: title,
+                details: Some(ItemDetails::from_entry(&get_entry(conn, id))),
+            },
+            None => panic!("No item with id {}", id),
+        }
+    }
+
+    pub fn insert_category(conn: &mut PooledConn, title: &str) -> Result<()> {
+        /// Insert a category into the database.
+        conn.query_drop(format!(
+            "INSERT INTO category (title, removed) VALUES ('{}', 0)",
+            title
+        ))
+    }
+
+    pub fn insert_entry(conn: &mut PooledConn, item: &Item) -> Result<()> {
+        /// Insert an entry into the database.
+        let details = item.details.as_ref().unwrap();
+        conn.exec_drop(
+            r"
+            INSERT INTO entry (item_id, cost, note, status, visible, removed)
             VALUES (
                 :item_id,
                 :cost,
                 :note,
                 :status,
-                :visible
-            )",
+                :visible,
+                :removed
+            );
+            ",
             params! {
-                "title" => &item.title,
-                "category_id" => item.category_id,
                 "item_id" => item.id,
                 "cost" => details.cost,
                 "note" => &details.note,
                 "status" => details.status,
                 "visible" => details.visible,
+                "removed" => details.removed,
+            },
+        )
+    }
+
+    pub fn insert_item(conn: &mut PooledConn, item: &mut Item) -> Result<()> {
+        /// Insert an item into the database.
+        let details = item.details.as_ref().unwrap();
+        println!("{:?}", details);
+
+        conn.exec_drop(
+            r"INSERT INTO item (title, category_id)
+            VALUES (
+                :title,
+                :category_id
+            );
+            ",
+            params! {
+                "title" => &item.title,
+                "category_id" => item.category_id,
             },
         )?;
 
-        // get ID of new item
-        let auto_incremented_id: u32 = conn
-            .query("SELECT id FROM item ORDER BY id DESC LIMIT 1")
-            .unwrap()[0];
+        item.id = Some(get_autoincremented_id(conn, "item"));
 
-        // update original item's id
-        item.id = Some(auto_incremented_id);
+        conn.exec_drop(
+            r"INSERT INTO entry (item_id, cost, note, status, visible, removed)
+            VALUES (
+                :item_id,
+                :cost,
+                :note,
+                :status,
+                :visible,
+                :removed
+            );
+            ",
+            params! {
+                "item_id" => item.id,
+                "cost" => details.cost,
+                "note" => &details.note,
+                "status" => details.status,
+                "visible" => details.visible,
+                "removed" => details.removed,
+            },
+        )?;
 
         Ok(())
+    }
+
+    pub fn title_taken(conn: &mut PooledConn, title: &str, table_name: &str) -> bool {
+        /// Check if a title is taken by a category or item.
+        if table_name == TABLE_NAME_CATEGORY {
+            for category in collect_categories(conn) {
+                if category.title == title && !category.removed {
+                    return true;
+                }
+            }
+
+            return false;
+        } else if table_name == TABLE_NAME_ITEM {
+            for (_, item) in collect_items(conn) {
+                if item.title == title && !item.details.unwrap().removed {
+                    return true;
+                }
+            }
+
+            return false;
+        } else {
+            panic!("Invalid table name");
+        }
     }
 
     pub fn test_auth(credentials: &DbCredentials) -> Result<()> {
@@ -124,7 +281,6 @@ pub mod database {
 
     pub fn update_item(conn: &mut PooledConn, item: &Item) -> Result<()> {
         /// Update an item in the database.
-        // TODO: Add GUI options for this part which currently does nothing.
         conn.exec_drop(
             r"
             UPDATE item
@@ -140,25 +296,6 @@ pub mod database {
         );
 
         // create a new entry with updated information
-        let details = item.details.as_ref().unwrap();
-        conn.exec_drop(
-            r"
-            INSERT INTO entry (item_id, cost, note, status, visible)
-            VALUES (
-                :item_id,
-                :cost,
-                :note,
-                :status,
-                :visible
-            );
-            ",
-            params! {
-                "item_id" => item.id,
-                "cost" => details.cost,
-                "note" => &details.note,
-                "status" => details.status,
-                "visible" => details.visible,
-            },
-        )
+        insert_entry(conn, item)
     }
 }
