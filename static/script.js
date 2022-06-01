@@ -36,6 +36,7 @@ class Item extends HTMLElement {
 
         this.status = this.getAttribute("status") || "0";
         this.visible = this.getAttribute("visible") || "false";
+        this.removed = this.getAttribute("removed") || "false";
 
         // constants
         this.LAST_NOTE = this.innerHTML;
@@ -120,6 +121,15 @@ class Item extends HTMLElement {
         this.unhideLink.onclick = () => this.setVisible(true);
         Object.assign(this.unhideLink.style, linkStyle);
 
+        // remove link (only shown if this.visible == "false")
+        this.removeLink = this.links.appendChild(document.createElement("a"));
+        this.removeLink.innerHTML = "Remove";
+        this.removeLink.onclick = () => this.remove();
+        Object.assign(this.removeLink.style, linkStyle);
+
+        // don't display remove link if item is visible
+        if (this.visible == "true") this.links.removeChild(this.removeLink);
+
         // item title & status indicator
         const itemDetails = this.wrapper.appendChild(document.createElement("span"));
         Object.assign(itemDetails.style, groupStyle);
@@ -186,6 +196,21 @@ class Item extends HTMLElement {
         }
     }
 
+    getMap() {
+        return {
+            "id": parseInt(this.id),
+            "title": this.title,
+            "category_id": parseInt(this.categoryID),
+            "details": {
+                "status": parseInt(this.status),
+                "cost": parseInt(this.repairCost.replace(".", "")),
+                "note": this.noteContent,
+                "visible": this.visible == "true" ? true : false,
+                "removed": this.removed == "true" ? true : false,
+            },
+        }
+    }
+
     setDisplay(value) {
         // filter items by status.
         // ignore changed items
@@ -214,12 +239,26 @@ class Item extends HTMLElement {
         this.setStatusDotColor(statusDot);
     }
 
+    remove() {
+        // confirm or cancel
+        if (!confirm(
+            "Items will not be removed from the database, "
+            + "but removed items can only be restored by a "
+            + "database administrator.\n\n"
+            + `Are you sure you want to remove item "${this.title}" ?`
+        )) {
+            return;
+        }
+
+        // set removed flag to true
+        postChange("delete/item", parseInt(this.id));
+    }
+
     setHideLink(value) {
         if (value) {
             this.links.appendChild(this.hideLink);
             this.links.removeChild(this.unhideLink);
-        }
-        else {
+        } else {
             this.links.appendChild(this.unhideLink);
             this.links.removeChild(this.hideLink);
         }
@@ -256,6 +295,14 @@ class Item extends HTMLElement {
         return color;
     }
 
+    setRemoveLink(value) {
+        if (!value) {
+            this.links.appendChild(this.removeLink);
+        } else {
+            this.links.removeChild(this.removeLink);
+        }
+    }
+
     setVisible(value) {
         this.visible = `${value}`;
         this.changed = true;
@@ -270,6 +317,9 @@ class Item extends HTMLElement {
         }
 
         this.setHideLink(value);
+        this.setRemoveLink(value);
+
+        postChange("update/item", this.getMap());
     }
 }
 
@@ -278,17 +328,7 @@ function collectChanges() {
     let changedItems = [];
     items.forEach((item) => {
         if (item.changed) {
-            changedItems.push({
-                "id": parseInt(item.id),
-                "title": item.title,
-                "category_id": parseInt(item.categoryID),
-                "details": {
-                    "status": parseInt(item.status),
-                    "cost": parseInt(item.repairCost.replace(".", "")),
-                    "note": item.noteContent,
-                    "visible": item.visible == "true" ? true : false,
-                },
-            });
+            changedItems.push(item.getMap());
 
             // update display for all items
             item.setDisplay(item.status == filterStatus.name);
@@ -296,6 +336,33 @@ function collectChanges() {
     });
 
     return changedItems;
+}
+
+function postChange(action, content) {
+    // send changes to server
+    let xhr = new XMLHttpRequest();
+    xhr.open("POST", action);
+    xhr.setRequestHeader("Accept", "application/json");
+    xhr.setRequestHeader("Content-Type", "application/json");
+
+    // log response to the console
+    xhr.onload = () => logReload(xhr);
+
+    xhr.send(JSON.stringify(content));
+}
+
+function deleteCategory(category) {
+    // set category to removed in database
+    let categoryID = parseInt(category.id.slice("cat-".length));
+
+    postChange("/delete/category", categoryID);
+}
+
+function deleteItem(item) {
+    // set item to removed in database
+    let itemID = parseInt(item.id);
+
+    postChange("/delete/item", itemID);
 }
 
 function displayAddPanel() {
@@ -335,19 +402,21 @@ function exitPanel(caller) {
     caller.parentNode.classList.remove("active");
 }
 
+function logReload(xhr) {
+    console.log(xhr.response);
+
+    if (xhr.response != "OK") {
+        alert(xhr.response);
+    }
+
+    window.location.reload();
+}
+
 function postChanges(items) {
     // send JSON data to backend via POST request
     let xhr = new XMLHttpRequest();
-    xhr.open("POST", "/");
-    xhr.setRequestHeader("Accept", "application/json");
-    xhr.setRequestHeader("Content-Type", "application/json");
 
-    // log response to the console
-    xhr.onload = () => {
-        console.log(xhr.response);
-    }
-
-    xhr.send(JSON.stringify(items));
+    postChange("/", items);
 }
 
 function saveChanges() {
@@ -357,6 +426,55 @@ function saveChanges() {
 
     // send data to backend via POST request
     postChanges(changedItems);
+}
+
+function hideEmptyCategories() {
+    // hide empty categories
+    document.querySelectorAll(`[id^="cat-"]`).forEach((category) => {
+        if (category.querySelectorAll("x-item").length == 0) {
+            let category_title = category.querySelector("h2").innerHTML;
+            categorySection.removeChild(category);
+
+            let deleteCategorySpan = document.createElement("span");
+            deleteCategorySpan.style.display = "flex";
+            deleteCategorySpan.style.gap = "1rem";
+            deleteCategorySpan.style.margin = ".25rem 0";
+
+            let deleteCategoryText = document.createElement("p");
+            deleteCategoryText.innerHTML = `${category_title}`;
+
+            let deleteCategoryLink = document.createElement("a");
+            deleteCategoryLink.innerHTML = "Delete";
+            deleteCategoryLink.style.textDecoration = "underline";
+            deleteCategoryLink.onclick = () => deleteCategory(category);
+
+            deleteCategorySpan.appendChild(deleteCategoryText);
+
+            // add delete link next to category title
+            // only add if category is truly empty (no hidden items)
+            let noHiddenItemsInCategory = true
+            hiddenItems.querySelectorAll("x-item").forEach((item) => {
+                if (item.categoryID == category.id.slice("cat-".length)) {
+                    noHiddenItemsInCategory = false;
+                }
+            });
+
+            if (noHiddenItemsInCategory) {
+                deleteCategorySpan.appendChild(deleteCategoryLink);
+            }
+
+            emptyCategorySection.appendChild(deleteCategorySpan);
+
+            // hide link to empty category in table of contents
+            document.querySelectorAll("a.toc-link").forEach((link) => {
+                if (link.innerHTML == category_title) {
+                    link.style.display = "none";
+                }
+            });
+
+            console.log(`[HIDING EMPTY CATEGORY: ${category_title}]`);
+        }
+    });
 }
 
 function filterItemsByStatus(type) {
@@ -419,7 +537,11 @@ function filterItemsByStatus(type) {
             // if no items match, set category display = none
             category.style.display = matchingItems.length > 0 ? "" : "none";
         }
+
+        // hide empty categories
     });
+
+    hideEmptyCategories();
 }
 
 function formSubmit(form) {
@@ -443,6 +565,8 @@ function formSubmit(form) {
             obj[field.name] = field.value;
         }
 
+        obj["removed"] = false;
+
         return obj;
     }, {});
 
@@ -450,20 +574,7 @@ function formSubmit(form) {
         return;
     }
 
-    console.log(form.action, fields);
-    let xhr = new XMLHttpRequest();
-
-    xhr.open("POST", form.action);
-    xhr.setRequestHeader("Accept", "application/json");
-    xhr.setRequestHeader("Content-Type", "application/json");
-
-    // log response to the console
-    xhr.onload = () => {
-        console.log(xhr.response);
-        window.location.reload();
-    }
-
-    xhr.send(JSON.stringify(fields));
+    postChange(form.action, fields)
 }
 
 function scrollToCategory(categoryID) {
@@ -485,14 +596,16 @@ function toggleAddSection(selected) {
 const addPanel = document.getElementById("add-panel");
 const addCategory = document.getElementById("add-category");
 const addItem = document.getElementById("add-item");
+const categorySection = document.getElementById("categories");
+const emptyCategorySection = document.getElementById("empty-categories");
 const hiddenItems = document.getElementById("hidden-items");
 const historyPanel = document.getElementById("history-panel");
 const historyBody = document.getElementById("history-body");
 const historyHeader = document.getElementById("history-header");
 const filterStatus = document.getElementById("filter-status");
 const filterCurrent = document.getElementById("filter-current");
-
 const forms = document.querySelectorAll("form");
+
 for (const form of forms) {
     form.addEventListener("submit", (e) => {
         e.preventDefault();
@@ -516,3 +629,11 @@ document.getElementById("filter-nav").onmouseout = () => document.getElementById
 
 addCategory.onclick = () => toggleAddSection(addCategory);
 addItem.onclick = () => toggleAddSection(addItem);
+
+window.onload = () => {
+    hideEmptyCategories()
+
+    // reset input and select fields
+    document.querySelectorAll("input").forEach((input) => { input.value = "" });
+    document.querySelectorAll("select").forEach((select) => { select.value = "-1" });
+};

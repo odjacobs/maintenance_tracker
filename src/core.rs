@@ -14,11 +14,16 @@ pub mod structs {
         /// Category for sorting items.
         pub id: Option<u32>,
         pub title: String,
+        pub removed: bool,
     }
 
     impl Category {
         pub fn new(title: String) -> Self {
-            Category { id: None, title }
+            Category {
+                id: None,
+                title,
+                removed: false,
+            }
         }
     }
 
@@ -30,6 +35,7 @@ pub mod structs {
             let result = Category {
                 id: row.take("id").unwrap(),
                 title: row.take("title").unwrap(),
+                removed: row.take("removed").unwrap(),
             };
 
             Ok(result)
@@ -118,6 +124,7 @@ pub mod structs {
         pub note: Option<String>,
         pub status: Option<u32>,
         pub visible: bool,
+        pub removed: bool,
         pub date: Option<String>,
     }
 
@@ -132,6 +139,7 @@ pub mod structs {
                 note: row.take("note").unwrap(),
                 status: row.take("status").unwrap(),
                 visible: row.take("visible").unwrap(),
+                removed: row.take("removed").unwrap(),
                 date: row.take("date").unwrap(),
             };
 
@@ -181,6 +189,7 @@ pub mod structs {
         pub note: Option<String>,
         pub status: u8,
         pub visible: bool,
+        pub removed: bool,
     }
 
     impl ItemDetails {
@@ -190,6 +199,7 @@ pub mod structs {
                 note: None,
                 status: 0,
                 visible: true,
+                removed: false,
             }
         }
     }
@@ -204,6 +214,7 @@ pub mod structs {
                 note: row.take("note").unwrap(),
                 status: row.take("status").unwrap(),
                 visible: row.take("visible").unwrap(),
+                removed: row.take("removed").unwrap(),
             };
 
             Ok(result)

@@ -217,17 +217,33 @@ async fn main() -> Result<()> {
             Ok(html_str)
         });
 
-    app.at("new/category")
+    app.at("add/category")
         .post(|mut req: tide::Request<State>| async move {
             let mut c = database::connect(&req.state().db_credentials).unwrap();
             let category = serde_json::from_str::<structs::Category>(&req.body_string().await?)?;
 
+            if database::title_exists(&mut c, &category.title, "category") {
+                return Ok(format!(
+                    "Category named \"{}\" already exists.",
+                    &category.title
+                ));
+            }
+
             database::insert_category(&mut c, &category.title)?;
+
+            Ok("OK".to_owned())
+        });
+    app.at("delete/category")
+        .post(|mut req: tide::Request<State>| async move {
+            let mut c = database::connect(&req.state().db_credentials).unwrap();
+            let category_id: u32 = serde_json::from_str(&req.body_string().await?)?;
+
+            database::delete_category(&mut c, category_id);
 
             Ok("OK")
         });
 
-    app.at("new/item")
+    app.at("add/item")
         .post(|mut req: tide::Request<State>| async move {
             let mut c = database::connect(&req.state().db_credentials).unwrap();
             let mut item = serde_json::from_str::<structs::Item>(&req.body_string().await?)?;
@@ -242,6 +258,24 @@ async fn main() -> Result<()> {
             database::insert_item(&mut c, &mut item)?;
 
             Ok("OK".to_owned())
+        });
+    app.at("delete/item")
+        .post(|mut req: tide::Request<State>| async move {
+            let mut c = database::connect(&req.state().db_credentials).unwrap();
+            let item_id: u32 = serde_json::from_str(&req.body_string().await?)?;
+
+            database::delete_item(&mut c, item_id);
+
+            Ok("OK")
+        });
+    app.at("update/item")
+        .post(|mut req: tide::Request<State>| async move {
+            let mut c = database::connect(&req.state().db_credentials).unwrap();
+            let item = serde_json::from_str::<structs::Item>(&req.body_string().await?)?;
+
+            database::update_item(&mut c, &item)?;
+
+            Ok("OK")
         });
 
     // run the application
