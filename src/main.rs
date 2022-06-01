@@ -15,7 +15,7 @@ mod core;
 mod data;
 mod db;
 
-use crate::core::{functions, structs};
+use crate::core::{functions, structs::*};
 use data::*;
 use db::database;
 
@@ -24,17 +24,13 @@ struct State {
     /// Container for basic runtime data.
     app_title: Option<String>,
     app_version: Option<String>,
-    config: structs::Config,
-    db_credentials: structs::DbCredentials,
+    config: Config,
+    db_credentials: DbCredentials,
     tera: Tera,
 }
 
 impl State {
-    fn new(
-        tera_instance: Tera,
-        config: structs::Config,
-        credentials: structs::DbCredentials,
-    ) -> Self {
+    fn new(tera_instance: Tera, config: Config, credentials: DbCredentials) -> Self {
         State {
             app_title: None,
             app_version: None,
@@ -77,22 +73,22 @@ async fn main() -> Result<()> {
 
     let mut conn: PooledConn;
     let mut conn_string: String = String::new();
-    let mut config: structs::Config;
-    let mut credentials: structs::DbCredentials;
+    let mut config: Config;
+    let mut credentials: DbCredentials;
 
     if config_filepath.exists() {
         // if a config file exists, read it
-        config = read_json::<structs::Config>(&config_filepath);
+        config = read_json::<Config>(&config_filepath);
     } else {
         // write a config file if one doesn't exist
-        config = structs::Config::from_prompt();
+        config = Config::from_prompt();
 
         write_json(&config, constants::CONFIG_FILE);
     }
 
     if credentials_filepath.exists() && !save && !other {
         // if credentials file exists and no flags are passed
-        credentials = read_json::<structs::DbCredentials>(&credentials_filepath);
+        credentials = read_json::<DbCredentials>(&credentials_filepath);
 
         match database::test_auth(&credentials) {
             Ok(_) => {}
@@ -104,8 +100,8 @@ async fn main() -> Result<()> {
     } else if save {
         // if `-s` flag is passed, overwrite existing configuration & credentials
         loop {
-            config = structs::Config::from_prompt();
-            credentials = structs::DbCredentials::from_prompt();
+            config = Config::from_prompt();
+            credentials = DbCredentials::from_prompt();
 
             match database::test_auth(&credentials) {
                 Ok(_) => break,
@@ -121,8 +117,8 @@ async fn main() -> Result<()> {
     } else {
         // if `-o` flag is passed, get other configuration settings
         loop {
-            config = structs::Config::from_prompt();
-            credentials = structs::DbCredentials::from_prompt();
+            config = Config::from_prompt();
+            credentials = DbCredentials::from_prompt();
 
             match database::test_auth(&credentials) {
                 Ok(_) => break,
@@ -220,9 +216,9 @@ async fn main() -> Result<()> {
     app.at("add/category")
         .post(|mut req: tide::Request<State>| async move {
             let mut c = database::connect(&req.state().db_credentials).unwrap();
-            let category = serde_json::from_str::<structs::Category>(&req.body_string().await?)?;
+            let category = serde_json::from_str::<Category>(&req.body_string().await?)?;
 
-            if database::title_exists(&mut c, &category.title, "category") {
+            if database::title_taken(&mut c, &category.title, category.table_name()) {
                 return Ok(format!(
                     "Category named \"{}\" already exists.",
                     &category.title
@@ -246,10 +242,10 @@ async fn main() -> Result<()> {
     app.at("add/item")
         .post(|mut req: tide::Request<State>| async move {
             let mut c = database::connect(&req.state().db_credentials).unwrap();
-            let mut item = serde_json::from_str::<structs::Item>(&req.body_string().await?)?;
-            item.details = Some(structs::ItemDetails::new());
+            let mut item = serde_json::from_str::<Item>(&req.body_string().await?)?;
+            item.details = Some(ItemDetails::new());
 
-            if database::title_exists(&mut c, &item.title, "item") {
+            if database::title_taken(&mut c, &item.title, item.table_name()) {
                 return Ok(format!("Item named \"{}\" already exists.", &item.title));
             }
 
@@ -271,7 +267,7 @@ async fn main() -> Result<()> {
     app.at("update/item")
         .post(|mut req: tide::Request<State>| async move {
             let mut c = database::connect(&req.state().db_credentials).unwrap();
-            let item = serde_json::from_str::<structs::Item>(&req.body_string().await?)?;
+            let item = serde_json::from_str::<Item>(&req.body_string().await?)?;
 
             database::update_item(&mut c, &item)?;
 

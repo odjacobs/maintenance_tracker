@@ -5,7 +5,8 @@ pub mod database {
 
     use mysql::{prelude::*, *};
 
-    use crate::core::structs::{Category, DbCredentials, Entry, Item, ItemDetails};
+    use crate::core::structs::*;
+    use crate::data::constants::{TABLE_NAME_CATEGORY, TABLE_NAME_ENTRY, TABLE_NAME_ITEM};
 
     pub fn collect_categories(conn: &mut PooledConn) -> Vec<Category> {
         /// Get all categories from the database.
@@ -112,6 +113,64 @@ pub mod database {
         new_id
     }
 
+    pub fn get_category(conn: &mut PooledConn, id: u32) -> Category {
+        /// Get a category from the database.
+        match conn
+            .exec_first(
+                "SELECT * FROM category WHERE id = :id",
+                params! {
+                    "id" => id,
+                },
+            )
+            .unwrap()
+        {
+            Some(category) => category,
+            None => panic!("No category with id {}", id),
+        }
+    }
+
+    pub fn get_entry(conn: &mut PooledConn, id: u32) -> Entry {
+        match conn
+            .exec_first(
+                r"
+                SELECT cost, note, status, visible, removed
+                FROM entry WHERE item_id = :item_id ORDER BY id DESC
+                ",
+                params! {
+                    "item_id" => id,
+                },
+            )
+            .unwrap()
+        {
+            Some(entry) => entry,
+            None => panic!("No entries with item_id {}", id),
+        }
+    }
+
+    pub fn get_item(conn: &mut PooledConn, id: u32) -> Item {
+        /// Get an item from the database.
+        let item: Option<Item> = conn
+            .exec_first(
+                "SELECT * FROM item WHERE id = :id",
+                params! {
+                    "id" => id,
+                },
+            )
+            .unwrap();
+
+        match item {
+            Some(Item {
+                category_id, title, ..
+            }) => Item {
+                id: Some(id),
+                category_id: category_id,
+                title: title,
+                details: Some(ItemDetails::from_entry(&get_entry(conn, id))),
+            },
+            None => panic!("No item with id {}", id),
+        }
+    }
+
     pub fn insert_category(conn: &mut PooledConn, title: &str) -> Result<()> {
         /// Insert a category into the database.
         conn.query_drop(format!(
@@ -190,16 +249,27 @@ pub mod database {
         Ok(())
     }
 
-    pub fn title_exists(conn: &mut PooledConn, title: &str, db_name: &str) -> bool {
-        /// Check if a title already exists in the database.
-        let mut result: Vec<u32> = conn
-            .query(format!(
-                "SELECT id FROM {} WHERE title = '{}'",
-                db_name, title
-            ))
-            .unwrap();
+    pub fn title_taken(conn: &mut PooledConn, title: &str, table_name: &str) -> bool {
+        /// Check if a title is taken by a category or item.
+        if table_name == TABLE_NAME_CATEGORY {
+            for category in collect_categories(conn) {
+                if category.title == title && !category.removed {
+                    return true;
+                }
+            }
 
-        result.len() > 0
+            return false;
+        } else if table_name == TABLE_NAME_ITEM {
+            for (_, item) in collect_items(conn) {
+                if item.title == title && !item.details.unwrap().removed {
+                    return true;
+                }
+            }
+
+            return false;
+        } else {
+            panic!("Invalid table name");
+        }
     }
 
     pub fn test_auth(credentials: &DbCredentials) -> Result<()> {
