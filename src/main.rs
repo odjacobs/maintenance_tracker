@@ -170,13 +170,16 @@ async fn main() -> Result<()> {
             let items = functions::parse_json_string(req_string);
 
             for (id, item) in items {
-                database::update_item(
+                match database::update_item(
                     &mut database::connect(&req.state().db_credentials).unwrap(),
                     &item,
-                )?;
+                ) {
+                    Ok(_) => {}
+                    Err(e) => return Ok(format!("Error updating item {}: {}", id, e)),
+                };
             }
 
-            Ok("OK")
+            Ok("OK".to_owned())
         });
 
     // ajax history
@@ -225,9 +228,10 @@ async fn main() -> Result<()> {
                 ));
             }
 
-            database::insert_category(&mut c, &category.title)?;
-
-            Ok("OK".to_owned())
+            match database::insert_category(&mut c, &category.title) {
+                Ok(()) => Ok("OK".to_owned()),
+                Err(e) => Ok(format!("Error inserting category: {}", e)),
+            }
         });
     app.at("delete/category")
         .post(|mut req: tide::Request<State>| async move {
@@ -251,9 +255,10 @@ async fn main() -> Result<()> {
 
             println!("{:?}", item);
 
-            database::insert_item(&mut c, &mut item)?;
-
-            Ok("OK".to_owned())
+            match database::insert_item(&mut c, &mut item) {
+                Ok(()) => Ok("OK".to_owned()),
+                Err(e) => Ok(format!("Error inserting item: {}", e)),
+            }
         });
     app.at("delete/item")
         .post(|mut req: tide::Request<State>| async move {
@@ -269,9 +274,10 @@ async fn main() -> Result<()> {
             let mut c = database::connect(&req.state().db_credentials).unwrap();
             let item = serde_json::from_str::<Item>(&req.body_string().await?)?;
 
-            database::update_item(&mut c, &item)?;
-
-            Ok("OK")
+            match database::update_item(&mut c, &item) {
+                Ok(()) => Ok("OK".to_owned()),
+                Err(e) => Ok(format!("Error updating item: {}", e)),
+            }
         });
 
     // run the application

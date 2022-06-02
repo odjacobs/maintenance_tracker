@@ -3,7 +3,7 @@
     --status-dot-filter-diameter: 1rem;
     --toc-width: 267px;
     --add-panel-width: 80ch;
-    --add-panel-height: 25vh;
+    --add-panel-height: 15rem;
     --history-panel-width: 80ch;
     --history-panel-height: 70vh;
 
@@ -252,7 +252,7 @@ x-item:nth-child(odd) {
     left: .5rem;
     padding: 0 .5rem;
     width: calc(var(--toc-width) - 1rem);
-    height: calc(100% - 8rem);
+    height: calc(100% - 10rem);
     overflow: hidden;
     overflow-y: auto;
 }

@@ -32,7 +32,7 @@ class Item extends HTMLElement {
         this.category = document.getElementById("cat-" + this.categoryID);
         this.note = this.innerHTML || "";
 
-        this.repairCost = this.getAttribute("cost") || "0";
+        this.repairCost = this.getAttribute("cost") || "0.00";
 
         this.status = this.getAttribute("status") || "0";
         this.visible = this.getAttribute("visible") || "false";
@@ -102,33 +102,95 @@ class Item extends HTMLElement {
             "cursor": "pointer",
         };
 
+        const optionsContainerStyle = {
+            "position": "relative",
+            "border-right": "solid 1px var(--font)",
+            "width": "4.45rem",
+            "margin-right": "150px",
+            "height": "3.5rem",
+        }
+
+        const lblOptionsStyle = {
+            "position": "absolute",
+            "top": "1.15rem",
+            "list-style-type": "none",
+            "cursor": "pointer",
+        }
+
+        const optionStyle = {
+            "position": "relative",
+            "top": "1.1rem",
+            "right": "0",
+            "transform": "translate(5rem, -1.2rem)",
+        }
+
+        this.categorySelectHiddenStyle = {
+            "position": "absolute",
+            "top": "1.05rem",
+            "left": "10rem",
+
+            "font-size": ".7rem",
+        }
+
+        this.categorySelectStyle = {
+            "position": "absolute",
+            "top": "2.25rem",
+            "left": "5.5rem",
+
+            "font-size": ".7rem",
+        }
+
         this.wrapper = document.createElement("span");
         Object.assign(this.wrapper.style, wrapperStyle);
 
         // links
-        this.links = document.createElement("span");
-        Object.apply(this.links.style, groupStyle);
+        this.optionsContainer = document.createElement("details");
+        Object.assign(this.optionsContainer.style, optionsContainerStyle);
+
+        let lblOptions = this.optionsContainer.appendChild(document.createElement("summary"));
+        lblOptions.innerText = "Options";
+        Object.assign(lblOptions.style, lblOptionsStyle);
 
         // hide link (only shown if this.visible == "true")
-        this.hideLink = this.links.appendChild(document.createElement("a"));
+        this.hideLink = this.optionsContainer.appendChild(document.createElement("a"));
         this.hideLink.innerHTML = "Hide";
         this.hideLink.onclick = () => this.setVisible(false);
-        Object.assign(this.hideLink.style, linkStyle);
+        Object.assign(this.hideLink.style, linkStyle, optionStyle);
 
         // unhide link (only shown if this.visible == "false")
-        this.unhideLink = this.links.appendChild(document.createElement("a"));
+        this.unhideLink = this.optionsContainer.appendChild(document.createElement("a"));
         this.unhideLink.innerHTML = "Unhide";
         this.unhideLink.onclick = () => this.setVisible(true);
-        Object.assign(this.unhideLink.style, linkStyle);
+        Object.assign(this.unhideLink.style, linkStyle, optionStyle);
 
         // remove link (only shown if this.visible == "false")
-        this.removeLink = this.links.appendChild(document.createElement("a"));
+        this.removeLink = this.optionsContainer.appendChild(document.createElement("a"));
         this.removeLink.innerHTML = "Remove";
         this.removeLink.onclick = () => this.remove();
-        Object.assign(this.removeLink.style, linkStyle);
+        Object.assign(this.removeLink.style, linkStyle, optionStyle);
+
+        this.categorySelect = this.optionsContainer.appendChild(document.createElement("select"));
+        this.categorySelect.onchange = () => this.setCategory(this.categorySelect.value);
+
+        let defaultOption = this.categorySelect.appendChild(document.createElement("option"));
+        defaultOption.disabled = true;
+        defaultOption.value = "-1";
+        defaultOption.innerText = "Change Category";
+
+        for (const category of categories) {
+            if (category.id.slice("cat-".length) == this.categoryID) {
+                continue;
+            }
+
+            let option = this.categorySelect.appendChild(document.createElement("option"));
+            option.value = category.id.slice("cat-".length);
+            option.innerText = category.firstElementChild.innerHTML;
+        }
+
+        Object.assign(this.categorySelect.style, this.visible == "true" ? this.categorySelectStyle : this.categorySelectHiddenStyle);
 
         // don't display remove link if item is visible
-        if (this.visible == "true") this.links.removeChild(this.removeLink);
+        if (this.visible == "true") this.optionsContainer.removeChild(this.removeLink);
 
         // item title & status indicator
         const itemDetails = this.wrapper.appendChild(document.createElement("span"));
@@ -161,10 +223,39 @@ class Item extends HTMLElement {
             document.createElement("input")
         );
 
+        // TODO (maybe): Improve input filtering.
+        repairCostInput.onkeydown = (e) => {
+            /**
+             * This input filter is very basic, and only blocks
+             * alpha characters and symbols. I don't expect it
+             * to become necessary to expand on this, but I'm
+             * leaving a TODO here just in case. - @piccoloser
+             */
+
+            let input = e.key;
+
+            if (
+                input >= "0" && input <= "9"
+                || input == "Backspace"
+                || input == "Delete"
+                || input == "ArrowLeft"
+                || input == "ArrowRight"
+                || input == "Enter"
+                || input == "Escape"
+                || input == "Tab"
+                || input == "."
+                || e.ctrlKey && input == "a"
+            ) return true;
+
+            // block everything else
+            e.preventDefault();
+            return false;
+        };
+
         repairCostInput.type = "number";
         repairCostInput.step = 10;
         repairCostInput.min = 0;
-        repairCostInput.value = this.repairCost;
+        repairCostInput.value = parseFloat(parseInt(this.repairCost) / 100).toFixed(2);
         repairCostInput.oninput = () => this.setRepairCost(repairCostInput);
         Object.assign(repairCostInput.style, costInputStyle);
 
@@ -175,15 +266,15 @@ class Item extends HTMLElement {
         Object.assign(note.style, noteStyle);
 
         // history link
-        const history = this.links.appendChild(document.createElement("a"));
+        const history = this.optionsContainer.appendChild(document.createElement("a"));
         history.innerHTML = "History";
         history.onclick = () => getHistory(this.id);
-        Object.assign(history.style, linkStyle);
+        Object.assign(history.style, linkStyle, optionStyle);
 
         // history button event
         history.onclick = () => displayHistoryPanel(this);
 
-        this.wrapper.appendChild(this.links);
+        this.wrapper.appendChild(this.optionsContainer);
         this.setHideLink(this.visible == "true");
         this.shadowRoot.append(this.wrapper);
 
@@ -197,18 +288,33 @@ class Item extends HTMLElement {
     }
 
     getMap() {
-        return {
-            "id": parseInt(this.id),
-            "title": this.title,
-            "category_id": parseInt(this.categoryID),
-            "details": {
-                "status": parseInt(this.status),
-                "cost": parseInt(this.repairCost.replace(".", "")),
-                "note": this.noteContent,
-                "visible": this.visible == "true" ? true : false,
-                "removed": this.removed == "true" ? true : false,
-            },
+        try {
+            return {
+                "id": parseInt(this.id),
+                "title": this.title,
+                "category_id": parseInt(this.categoryID),
+                "details": {
+                    "status": parseInt(this.status),
+                    "cost": parseDollarCents(this.repairCost),
+                    "note": this.noteContent,
+                    "visible": this.visible == "true" ? true : false,
+                    "removed": this.removed == "true" ? true : false,
+                },
+            }
         }
+
+        catch (e) {
+            console.log(e);
+            alert(`Please double check field inputs for item ${this.title}`);
+
+            // throw new Error();
+            return;
+        }
+    }
+
+    setCategory(categoryID) {
+        this.categoryID = categoryID;
+        postChange("update/item", this.getMap())
     }
 
     setDisplay(value) {
@@ -256,11 +362,11 @@ class Item extends HTMLElement {
 
     setHideLink(value) {
         if (value) {
-            this.links.appendChild(this.hideLink);
-            this.links.removeChild(this.unhideLink);
+            this.optionsContainer.appendChild(this.hideLink);
+            this.optionsContainer.removeChild(this.unhideLink);
         } else {
-            this.links.appendChild(this.unhideLink);
-            this.links.removeChild(this.hideLink);
+            this.optionsContainer.appendChild(this.unhideLink);
+            this.optionsContainer.removeChild(this.hideLink);
         }
     }
 
@@ -297,9 +403,9 @@ class Item extends HTMLElement {
 
     setRemoveLink(value) {
         if (!value) {
-            this.links.appendChild(this.removeLink);
+            this.optionsContainer.appendChild(this.removeLink);
         } else {
-            this.links.removeChild(this.removeLink);
+            this.optionsContainer.removeChild(this.removeLink);
         }
     }
 
@@ -310,10 +416,12 @@ class Item extends HTMLElement {
         if (!value) {
             this.category.removeChild(this);
             hiddenItems.appendChild(this);
+            Object.assign(this.categorySelect.style, this.categorySelectHiddenStyle);
         }
         else {
             hiddenItems.removeChild(this);
             this.category.appendChild(this);
+            Object.assign(this.categorySelect.style, this.categorySelectStyle);
         }
 
         this.setHideLink(value);
@@ -328,7 +436,10 @@ function collectChanges() {
     let changedItems = [];
     items.forEach((item) => {
         if (item.changed) {
-            changedItems.push(item.getMap());
+            try {
+                changedItems.push(item.getMap());
+            }
+            catch (e) { console.log(e); }
 
             // update display for all items
             item.setDisplay(item.status == filterStatus.name);
@@ -336,19 +447,6 @@ function collectChanges() {
     });
 
     return changedItems;
-}
-
-function postChange(action, content) {
-    // send changes to server
-    let xhr = new XMLHttpRequest();
-    xhr.open("POST", action);
-    xhr.setRequestHeader("Accept", "application/json");
-    xhr.setRequestHeader("Content-Type", "application/json");
-
-    // log response to the console
-    xhr.onload = () => logReload(xhr);
-
-    xhr.send(JSON.stringify(content));
 }
 
 function deleteCategory(category) {
@@ -403,29 +501,55 @@ function exitPanel(caller) {
 }
 
 function logReload(xhr) {
-    console.log(xhr.response);
-
     if (xhr.response != "OK") {
         alert(xhr.response);
+        return;
     }
 
     window.location.reload();
 }
 
-function postChanges(items) {
-    // send JSON data to backend via POST request
-    let xhr = new XMLHttpRequest();
+function parseDollarCents(value) {
+    if (!value) return 0;
 
-    postChange("/", items);
+    let [dollars, cents] = value.split(".");
+
+    if (!dollars && !cents) {
+        throw new Error(`Invalid Price: "${value}"`);
+    }
+
+    cents = cents == undefined ? "00" : cents.padEnd(2, "0").slice(0, 2);
+
+    return parseInt(dollars + cents)
+}
+
+function postChange(action, content) {
+    // send changes to server
+    let xhr = new XMLHttpRequest();
+    xhr.open("POST", action);
+    xhr.setRequestHeader("Accept", "application/json");
+    xhr.setRequestHeader("Content-Type", "application/json");
+
+    // log response to the console
+    xhr.onload = () => {
+        logReload(xhr, false);
+    };
+
+    xhr.send(JSON.stringify(content));
 }
 
 function saveChanges() {
-    // get changes as an array of Objects
-    let changedItems = collectChanges();
-    console.log(changedItems);
+    try {
+        // get changes as an array of Objects
+        let changedItems = collectChanges();
 
-    // send data to backend via POST request
-    postChanges(changedItems);
+        // send data to backend via POST request
+        postChange("/", changedItems);
+    }
+    catch (e) {
+        alert(e.message);
+        return;
+    }
 }
 
 function hideEmptyCategories() {
@@ -636,4 +760,11 @@ window.onload = () => {
     // reset input and select fields
     document.querySelectorAll("input").forEach((input) => { input.value = "" });
     document.querySelectorAll("select").forEach((select) => { select.value = "-1" });
+
+    // hide hidden items section there are no hidden items or empty categories
+    if (
+        hiddenItems.querySelectorAll("x-item").length == 0
+        && emptyCategorySection.querySelectorAll("x-category").length == 0) {
+        hiddenItems.style.display = "none";
+    }
 };

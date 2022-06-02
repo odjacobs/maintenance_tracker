@@ -171,18 +171,21 @@ pub mod database {
         }
     }
 
-    pub fn insert_category(conn: &mut PooledConn, title: &str) -> Result<()> {
+    pub fn insert_category(conn: &mut PooledConn, title: &str) -> mysql::Result<()> {
         /// Insert a category into the database.
-        conn.query_drop(format!(
+        match conn.query_drop(format!(
             "INSERT INTO category (title, removed) VALUES ('{}', 0)",
             title
-        ))
+        )) {
+            Ok(_) => Ok(()),
+            Err(e) => Err(e),
+        }
     }
 
-    pub fn insert_entry(conn: &mut PooledConn, item: &Item) -> Result<()> {
+    pub fn insert_entry(conn: &mut PooledConn, item: &Item) -> mysql::Result<()> {
         /// Insert an entry into the database.
         let details = item.details.as_ref().unwrap();
-        conn.exec_drop(
+        match conn.exec_drop(
             r"
             INSERT INTO entry (item_id, cost, note, status, visible, removed)
             VALUES (
@@ -202,15 +205,18 @@ pub mod database {
                 "visible" => details.visible,
                 "removed" => details.removed,
             },
-        )
+        ) {
+            Ok(_) => Ok(()),
+            Err(e) => Err(e),
+        }
     }
 
-    pub fn insert_item(conn: &mut PooledConn, item: &mut Item) -> Result<()> {
+    pub fn insert_item(conn: &mut PooledConn, item: &mut Item) -> mysql::Result<()> {
         /// Insert an item into the database.
         let details = item.details.as_ref().unwrap();
         println!("{:?}", details);
 
-        conn.exec_drop(
+        match conn.exec_drop(
             r"INSERT INTO item (title, category_id)
             VALUES (
                 :title,
@@ -221,30 +227,14 @@ pub mod database {
                 "title" => &item.title,
                 "category_id" => item.category_id,
             },
-        )?;
+        ) {
+            Ok(_) => {}
+            Err(e) => return Err(e),
+        }
 
         item.id = Some(get_autoincremented_id(conn, "item"));
 
-        conn.exec_drop(
-            r"INSERT INTO entry (item_id, cost, note, status, visible, removed)
-            VALUES (
-                :item_id,
-                :cost,
-                :note,
-                :status,
-                :visible,
-                :removed
-            );
-            ",
-            params! {
-                "item_id" => item.id,
-                "cost" => details.cost,
-                "note" => &details.note,
-                "status" => details.status,
-                "visible" => details.visible,
-                "removed" => details.removed,
-            },
-        )?;
+        insert_entry(conn, item)?;
 
         Ok(())
     }
@@ -279,9 +269,9 @@ pub mod database {
         }
     }
 
-    pub fn update_item(conn: &mut PooledConn, item: &Item) -> Result<()> {
+    pub fn update_item(conn: &mut PooledConn, item: &Item) -> mysql::Result<()> {
         /// Update an item in the database.
-        conn.exec_drop(
+        match conn.exec_drop(
             r"
             UPDATE item
             SET title = :title,
@@ -293,7 +283,10 @@ pub mod database {
                 "title" => &item.title,
                 "category_id" => item.category_id,
             },
-        );
+        ) {
+            Ok(_) => {}
+            Err(e) => return Err(e),
+        };
 
         // create a new entry with updated information
         insert_entry(conn, item)
