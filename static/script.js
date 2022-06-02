@@ -211,11 +211,11 @@ class Item extends HTMLElement {
         const costDetails = this.wrapper.appendChild(document.createElement("span"));
         Object.assign(costDetails.style, groupStyle);
 
-        // label that displays text "Est. Repair Cost:"
+        // label that displays text "Repair Cost:"
         const lblRepairCost = costDetails.appendChild(
             document.createElement("p")
         );
-        lblRepairCost.innerHTML = "Est. Repair Cost:";
+        lblRepairCost.innerHTML = "Repair Cost:";
         Object.assign(lblRepairCost.style, lblRepairCostStyle);
 
         // input for this.repairCost
