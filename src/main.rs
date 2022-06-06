@@ -272,7 +272,13 @@ async fn main() -> Result<()> {
     app.at("update/item")
         .post(|mut req: tide::Request<State>| async move {
             let mut c = database::connect(&req.state().db_credentials).unwrap();
-            let item = serde_json::from_str::<Item>(&req.body_string().await?)?;
+
+            let item = match serde_json::from_str::<Item>(&req.body_string().await?) {
+                Ok(item) => item,
+                Err(e) => {
+                    return Ok(format!("Error parsing item: {}", e));
+                }
+            };
 
             match database::update_item(&mut c, &item) {
                 Ok(()) => Ok("OK".to_owned()),
