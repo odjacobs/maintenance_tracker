@@ -78,6 +78,11 @@ html {
     scroll-behavior: smooth;
 }
 
+input[type=radio],
+input[type=radio]+p {
+    cursor: pointer;
+}
+
 main {
     display: grid;
     grid-template-columns: 30ch auto;

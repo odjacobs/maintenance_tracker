@@ -698,8 +698,14 @@ function scrollToTop() {
 
 function toggleAddSection(selected) {
     // toggle the selected section of the add panel
+    selected.checked = true;
+
+    let fieldset = selected.parentNode.nextElementSibling.firstElementChild;
+
     addCategory.parentNode.nextElementSibling.firstElementChild.disabled = selected != addCategory;
     addItem.parentNode.nextElementSibling.firstElementChild.disabled = selected != addItem;
+
+    fieldset.querySelector("input[name='title']").focus();
 }
 
 function updateUnsavedChangesMsg() {
@@ -749,7 +755,10 @@ document.getElementById("filter-nav").onmouseover = () => document.getElementByI
 document.getElementById("filter-nav").onmouseout = () => document.getElementById("filter-nav").classList.remove("active");
 
 addCategory.onclick = () => toggleAddSection(addCategory);
+addCategory.nextElementSibling.onclick = () => toggleAddSection(addCategory);
+
 addItem.onclick = () => toggleAddSection(addItem);
+addItem.nextElementSibling.onclick = () => toggleAddSection(addItem);
 
 window.onload = () => {
     hideEmptyCategories()
