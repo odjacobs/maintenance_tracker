@@ -1,6 +1,2 @@
-/.vs
-/target
-.env
-.idea
-config.json
-credentials.json
+*
+!*.jpg
