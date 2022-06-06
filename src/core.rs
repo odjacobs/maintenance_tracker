@@ -9,11 +9,43 @@ pub mod structs {
     use rpassword::read_password;
     use serde::{Deserialize, Serialize};
 
-    #[derive(serde::Serialize, Debug, PartialEq, Eq)]
+    use crate::constants::{
+        REFERENCE_ID_CATEGORY, REFERENCE_ID_ITEM, TABLE_NAME_CATEGORY, TABLE_NAME_ITEM,
+    };
+
+    pub trait IsTable {
+        /// Values:
+        /// - `reference_id`: The name of the foreign key column.
+        /// - `table_name`: The name of the table.
+        fn reference_id(&self) -> Option<&'static str>;
+        fn table_name(&self) -> &'static str;
+    }
+
+    #[derive(serde::Serialize, serde::Deserialize, Debug, PartialEq, Eq)]
     pub struct Category {
         /// Category for sorting items.
-        pub id: u32,
+        pub id: Option<u32>,
         pub title: String,
+        pub removed: bool,
+    }
+
+    impl Category {
+        pub fn new(title: String) -> Self {
+            Category {
+                id: None,
+                title,
+                removed: false,
+            }
+        }
+    }
+
+    impl IsTable for Category {
+        fn reference_id(&self) -> Option<&'static str> {
+            REFERENCE_ID_CATEGORY
+        }
+        fn table_name(&self) -> &'static str {
+            TABLE_NAME_CATEGORY
+        }
     }
 
     impl FromRow for Category {
@@ -24,6 +56,7 @@ pub mod structs {
             let result = Category {
                 id: row.take("id").unwrap(),
                 title: row.take("title").unwrap(),
+                removed: row.take("removed").unwrap(),
             };
 
             Ok(result)
@@ -106,12 +139,14 @@ pub mod structs {
         }
     }
 
+    #[derive(Debug)]
     pub struct Entry {
         pub id: Option<u32>,
         pub cost: Option<u32>,
         pub note: Option<String>,
         pub status: Option<u32>,
         pub visible: bool,
+        pub removed: bool,
         pub date: Option<String>,
     }
 
@@ -126,6 +161,7 @@ pub mod structs {
                 note: row.take("note").unwrap(),
                 status: row.take("status").unwrap(),
                 visible: row.take("visible").unwrap(),
+                removed: row.take("removed").unwrap(),
                 date: row.take("date").unwrap(),
             };
 
@@ -153,6 +189,15 @@ pub mod structs {
         }
     }
 
+    impl IsTable for Item {
+        fn reference_id(&self) -> Option<&'static str> {
+            REFERENCE_ID_ITEM
+        }
+        fn table_name(&self) -> &'static str {
+            TABLE_NAME_ITEM
+        }
+    }
+
     impl FromRow for Item {
         fn from_row_opt(row: Row) -> Result<Item, FromRowError> {
             /// Convert a row of data into an Item.
@@ -173,8 +218,31 @@ pub mod structs {
         /// Mutable details about an Item.
         pub cost: Option<u32>,
         pub note: Option<String>,
-        pub status: u8,
+        pub status: u32,
         pub visible: bool,
+        pub removed: bool,
+    }
+
+    impl ItemDetails {
+        pub fn new() -> ItemDetails {
+            ItemDetails {
+                cost: None,
+                note: None,
+                status: 0,
+                visible: true,
+                removed: false,
+            }
+        }
+
+        pub fn from_entry(entry: &Entry) -> ItemDetails {
+            ItemDetails {
+                cost: entry.cost,
+                note: entry.note.clone(),
+                status: entry.status.unwrap_or(0),
+                visible: entry.visible,
+                removed: entry.removed,
+            }
+        }
     }
 
     impl FromRow for ItemDetails {
@@ -187,6 +255,7 @@ pub mod structs {
                 note: row.take("note").unwrap(),
                 status: row.take("status").unwrap(),
                 visible: row.take("visible").unwrap(),
+                removed: row.take("removed").unwrap(),
             };
 
             Ok(result)
@@ -199,13 +268,13 @@ pub mod functions {
 
     use serde_json;
 
-    use crate::structs;
+    use crate::Item;
 
-    pub fn parse_json_string(req: String) -> HashMap<u32, structs::Item> {
+    pub fn parse_json_string(req: String) -> HashMap<u32, Item> {
         /// Takes JSON data from a POST request and converts it
         /// into a HashMap of items to update in the database.
-        let mut result: HashMap<u32, structs::Item> = HashMap::new();
-        let mut items: Vec<structs::Item> = serde_json::from_str(&req).unwrap();
+        let mut result: HashMap<u32, Item> = HashMap::new();
+        let mut items: Vec<Item> = serde_json::from_str(&req).unwrap();
 
         for item in items.iter() {
             result.insert(item.id.unwrap(), item.clone());

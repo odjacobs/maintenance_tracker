@@ -1491,7 +1491,7 @@ dependencies = [
 
 [[package]]
 name = "maintenance_tracker"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "async-std",
  "dotenv",

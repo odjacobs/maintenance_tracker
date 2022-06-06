@@ -30,15 +30,16 @@ class Item extends HTMLElement {
         this.id = this.getAttribute("id");
         this.categoryID = this.getAttribute("categoryID");
         this.category = document.getElementById("cat-" + this.categoryID);
-        this.note = this.innerHTML || "";
+        this.note = this.innerHTML.trim() || "";
 
-        this.repairCost = this.getAttribute("cost") || "0";
+        this.repairCost = this.getAttribute("cost") || "0.00";
 
         this.status = this.getAttribute("status") || "0";
         this.visible = this.getAttribute("visible") || "false";
+        this.removed = this.getAttribute("removed") || "false";
 
         // constants
-        this.LAST_NOTE = this.innerHTML;
+        this.LAST_NOTE = this.innerHTML.trim();
         this.LAST_REPAIR_COST = this.repairCost;
         this.LAST_STATUS = this.status;
 
@@ -101,24 +102,95 @@ class Item extends HTMLElement {
             "cursor": "pointer",
         };
 
+        const optionsContainerStyle = {
+            "position": "relative",
+            "border-right": "solid 1px var(--font)",
+            "width": "4.45rem",
+            "margin-right": "150px",
+            "height": "3.5rem",
+        }
+
+        const lblOptionsStyle = {
+            "position": "absolute",
+            "top": "1.15rem",
+            "list-style-type": "none",
+            "cursor": "pointer",
+        }
+
+        const optionStyle = {
+            "position": "relative",
+            "top": "1.1rem",
+            "right": "0",
+            "transform": "translate(5rem, -1.2rem)",
+        }
+
+        this.categorySelectHiddenStyle = {
+            "position": "absolute",
+            "top": "1.05rem",
+            "left": "10rem",
+
+            "font-size": ".7rem",
+        }
+
+        this.categorySelectStyle = {
+            "position": "absolute",
+            "top": "2.25rem",
+            "left": "5.5rem",
+
+            "font-size": ".7rem",
+        }
+
         this.wrapper = document.createElement("span");
         Object.assign(this.wrapper.style, wrapperStyle);
 
         // links
-        this.links = document.createElement("span");
-        Object.apply(this.links.style, groupStyle);
+        this.optionsContainer = document.createElement("details");
+        Object.assign(this.optionsContainer.style, optionsContainerStyle);
+
+        let lblOptions = this.optionsContainer.appendChild(document.createElement("summary"));
+        lblOptions.innerText = "Options";
+        Object.assign(lblOptions.style, lblOptionsStyle);
 
         // hide link (only shown if this.visible == "true")
-        this.hideLink = this.links.appendChild(document.createElement("a"));
+        this.hideLink = this.optionsContainer.appendChild(document.createElement("a"));
         this.hideLink.innerHTML = "Hide";
         this.hideLink.onclick = () => this.setVisible(false);
-        Object.assign(this.hideLink.style, linkStyle);
+        Object.assign(this.hideLink.style, linkStyle, optionStyle);
 
         // unhide link (only shown if this.visible == "false")
-        this.unhideLink = this.links.appendChild(document.createElement("a"));
+        this.unhideLink = this.optionsContainer.appendChild(document.createElement("a"));
         this.unhideLink.innerHTML = "Unhide";
         this.unhideLink.onclick = () => this.setVisible(true);
-        Object.assign(this.unhideLink.style, linkStyle);
+        Object.assign(this.unhideLink.style, linkStyle, optionStyle);
+
+        // remove link (only shown if this.visible == "false")
+        this.removeLink = this.optionsContainer.appendChild(document.createElement("a"));
+        this.removeLink.innerHTML = "Remove";
+        this.removeLink.onclick = () => this.remove();
+        Object.assign(this.removeLink.style, linkStyle, optionStyle);
+
+        this.categorySelect = this.optionsContainer.appendChild(document.createElement("select"));
+        this.categorySelect.onchange = () => this.setCategory(this.categorySelect.value);
+
+        let defaultOption = this.categorySelect.appendChild(document.createElement("option"));
+        defaultOption.disabled = true;
+        defaultOption.value = "-1";
+        defaultOption.innerText = "Change Category";
+
+        for (const category of categories) {
+            if (category.id.slice("cat-".length) == this.categoryID) {
+                continue;
+            }
+
+            let option = this.categorySelect.appendChild(document.createElement("option"));
+            option.value = category.id.slice("cat-".length);
+            option.innerText = category.firstElementChild.innerHTML;
+        }
+
+        Object.assign(this.categorySelect.style, this.visible == "true" ? this.categorySelectStyle : this.categorySelectHiddenStyle);
+
+        // don't display remove link if item is visible
+        if (this.visible == "true") this.optionsContainer.removeChild(this.removeLink);
 
         // item title & status indicator
         const itemDetails = this.wrapper.appendChild(document.createElement("span"));
@@ -131,6 +203,7 @@ class Item extends HTMLElement {
 
         // item status indicator dot
         const statusDot = itemDetails.appendChild(document.createElement("span"));
+        statusDot.classList.add("status-dot")
         statusDot.onclick = (o) => this.nextStatusDotColor(o);
         Object.assign(statusDot.style, statusDotStyle);
         this.setStatusDotColor(statusDot);
@@ -139,24 +212,36 @@ class Item extends HTMLElement {
         const costDetails = this.wrapper.appendChild(document.createElement("span"));
         Object.assign(costDetails.style, groupStyle);
 
-        // label that displays text "Est. Repair Cost:"
+        // label that displays text "Repair Cost:"
         const lblRepairCost = costDetails.appendChild(
             document.createElement("p")
         );
-        lblRepairCost.innerHTML = "Est. Repair Cost:";
+        lblRepairCost.innerHTML = "Repair Cost:";
         Object.assign(lblRepairCost.style, lblRepairCostStyle);
 
         // input for this.repairCost
-        const repairCostInput = costDetails.appendChild(
+        this.repairCostInput = costDetails.appendChild(
             document.createElement("input")
         );
 
-        repairCostInput.type = "number";
-        repairCostInput.step = 10;
-        repairCostInput.min = 0;
-        repairCostInput.value = this.repairCost;
-        repairCostInput.oninput = () => this.setRepairCost(repairCostInput);
-        Object.assign(repairCostInput.style, costInputStyle);
+        this.repairCostInput.onkeydown = (e) => {
+            // only allow numerical input and editing keys
+            if (
+                e.key.length == 1
+                && /[-a-z!@#$%^&*()\[\]\\\/]/i
+                    .test(e.key)
+                && !e.ctrlKey
+            ) e.preventDefault();
+        };
+
+        this.repairCostInput.oninput = () => {
+            // set repair cost to input value and update changed status
+            this.repairCost = this.repairCostInput.value;
+            this.updateChanged()
+        };
+
+        this.repairCostInput.value = parseFloat(parseInt(this.repairCost)).toFixed(2);
+        Object.assign(this.repairCostInput.style, costInputStyle);
 
         // maintenance notes
         const note = this.wrapper.appendChild(document.createElement("textarea"));
@@ -165,15 +250,15 @@ class Item extends HTMLElement {
         Object.assign(note.style, noteStyle);
 
         // history link
-        const history = this.links.appendChild(document.createElement("a"));
+        const history = this.optionsContainer.appendChild(document.createElement("a"));
         history.innerHTML = "History";
         history.onclick = () => getHistory(this.id);
-        Object.assign(history.style, linkStyle);
+        Object.assign(history.style, linkStyle, optionStyle);
 
         // history button event
         history.onclick = () => displayHistoryPanel(this);
 
-        this.wrapper.appendChild(this.links);
+        this.wrapper.appendChild(this.optionsContainer);
         this.setHideLink(this.visible == "true");
         this.shadowRoot.append(this.wrapper);
 
@@ -184,6 +269,33 @@ class Item extends HTMLElement {
         else {
             hiddenItems.appendChild(this);
         }
+    }
+
+    getMap() {
+        try {
+            return {
+                "id": parseInt(this.id),
+                "title": this.title,
+                "category_id": parseInt(this.categoryID),
+                "details": {
+                    "status": parseInt(this.status),
+                    "cost": parseInt(parseDollarCents(this.repairCost)),
+                    "note": this.note,
+                    "visible": this.visible == "true" ? true : false,
+                    "removed": this.removed == "true" ? true : false,
+                },
+            }
+        }
+
+        catch (e) {
+            alert(`Error parsing item ${this.title}: ${e}`);
+            throw e;
+        }
+    }
+
+    setCategory(categoryID) {
+        this.categoryID = categoryID;
+        postChange("update/item", this.getMap(), false);
     }
 
     setDisplay(value) {
@@ -210,29 +322,41 @@ class Item extends HTMLElement {
         intStatus %= 3;
 
         this.status = `${intStatus}`;
-        this.changed = true;
+        this.updateChanged();
+        updateUnsavedChangesMsg();
+
         this.setStatusDotColor(statusDot);
+    }
+
+    remove() {
+        // confirm or cancel
+        if (!confirm(
+            "Items will not be removed from the database, "
+            + "but removed items can only be restored by a "
+            + "database administrator.\n\n"
+            + `Are you sure you want to remove item "${this.title}" ?`
+        )) {
+            return;
+        }
+
+        // set removed flag to true
+        this.style.display = "none";
+        postChange("delete/item", parseInt(this.id), false);
     }
 
     setHideLink(value) {
         if (value) {
-            this.links.appendChild(this.hideLink);
-            this.links.removeChild(this.unhideLink);
-        }
-        else {
-            this.links.appendChild(this.unhideLink);
-            this.links.removeChild(this.hideLink);
+            this.optionsContainer.appendChild(this.hideLink);
+            this.optionsContainer.removeChild(this.unhideLink);
+        } else {
+            this.optionsContainer.appendChild(this.unhideLink);
+            this.optionsContainer.removeChild(this.hideLink);
         }
     }
 
     setNoteContent(textareaElement) {
-        this.noteContent = textareaElement.value;
-        this.changed = true;
-    }
-
-    setRepairCost(inputElement) {
-        this.repairCost = inputElement.value;
-        this.changed = true;
+        this.note = textareaElement.value;
+        this.updateChanged();
     }
 
     setStatusDotColor(statusDot) {
@@ -256,46 +380,72 @@ class Item extends HTMLElement {
         return color;
     }
 
+    setRemoveLink(value) {
+        if (!value) {
+            this.optionsContainer.appendChild(this.removeLink);
+        } else {
+            this.optionsContainer.removeChild(this.removeLink);
+        }
+    }
+
     setVisible(value) {
         this.visible = `${value}`;
-        this.changed = true;
 
         if (!value) {
             this.category.removeChild(this);
             hiddenItems.appendChild(this);
+            Object.assign(this.categorySelect.style, this.categorySelectHiddenStyle);
+
+            hiddenItems.style.display = "block";
         }
         else {
             hiddenItems.removeChild(this);
             this.category.appendChild(this);
+            Object.assign(this.categorySelect.style, this.categorySelectStyle);
         }
 
         this.setHideLink(value);
+        this.setRemoveLink(value);
+
+        postChange("update/item", this.getMap(), false);
+        changedItems.splice(changedItems.indexOf(this), 1);
+    }
+
+    updateChanged() {
+        if (
+            this.status == this.LAST_STATUS
+            && this.repairCost == this.LAST_REPAIR_COST / 100
+            && this.note == this.LAST_NOTE
+        ) {
+            this.changed = false;
+            changedItems.splice(changedItems.indexOf(this), 1);
+        } else {
+            if (!this.changed) {
+                this.changed = true;
+                changedItems.push(this);
+            }
+        }
     }
 }
 
-function collectChanges() {
-    // get all changed items and return them in Object form
-    let changedItems = [];
-    items.forEach((item) => {
-        if (item.changed) {
-            changedItems.push({
-                "id": parseInt(item.id),
-                "title": item.title,
-                "category_id": parseInt(item.categoryID),
-                "details": {
-                    "status": parseInt(item.status),
-                    "cost": parseInt(item.repairCost.replace(".", "")),
-                    "note": item.noteContent,
-                    "visible": item.visible == "true" ? true : false,
-                },
-            });
+function deleteCategory(category) {
+    // set category to removed in database
+    let categoryID = parseInt(category.id.slice("cat-".length));
 
-            // update display for all items
-            item.setDisplay(item.status == filterStatus.name);
-        }
-    });
+    document.getElementById(`cat-${categoryID}`).style.display = "none";
+    postChange("/delete/category", categoryID, false);
+}
 
-    return changedItems;
+function displayAddPanel() {
+    addPanel.classList.add("active");
+
+    for (const input of addPanel.querySelectorAll("input[type=radio]")) {
+        input.checked = false;
+    }
+
+    for (const fieldset of addPanel.querySelectorAll("fieldset")) {
+        fieldset.disabled = true;
+    }
 }
 
 function displayHistoryPanel(item) {
@@ -319,32 +469,121 @@ function displayHistoryPanel(item) {
     historyPanel.classList.add("active");
 }
 
-function exitHistoryPanel() {
-    historyPanel.classList.remove("active");
+function exitPanel(caller) {
+    caller.parentNode.classList.remove("active");
 }
 
-function postChanges(items) {
-    // send JSON data to backend via POST request
+function logReload(xhr) {
+    if (xhr.response != "OK") {
+        alert(xhr.response);
+        return;
+    }
+
+    window.location.reload();
+}
+
+function parseDollarCents(value) {
+    if (value == "") return "0.00";
+
+    let [dollars, cents] = value.split(".");
+
+    if (!dollars && !cents) {
+        throw new Error(`Invalid Price: "${value}"`);
+    }
+
+    cents = cents == undefined ? "00" : cents.padEnd(2, "0").slice(0, 2);
+
+    return `${dollars}.${cents}`
+}
+
+function postChange(action, content, autoReload) {
+    // send changes to server
     let xhr = new XMLHttpRequest();
-    xhr.open("POST", "/");
+    xhr.open("POST", action);
     xhr.setRequestHeader("Accept", "application/json");
     xhr.setRequestHeader("Content-Type", "application/json");
 
     // log response to the console
     xhr.onload = () => {
-        console.log(xhr.response);
-    }
+        if (!autoReload) {
+            // check for unsaved changes
+            if (changedItems.length > 0) {
+                updateUnsavedChangesMsg();
+            } else {
+                logReload(xhr, false);
+            }
+        }
 
-    xhr.send(JSON.stringify(items));
+        else {
+            logReload(xhr, false);
+        }
+    };
+
+    xhr.send(JSON.stringify(content));
 }
 
 function saveChanges() {
-    // get changes as an array of Objects
-    let changedItems = collectChanges();
-    console.log(changedItems);
-
     // send data to backend via POST request
-    postChanges(changedItems);
+    let changes = [];
+
+    try {
+        changes = changedItems.map((item) => item.getMap());
+    }
+
+    catch (e) {
+        return;
+    }
+
+    postChange("/", changes, true);
+}
+
+function hideEmptyCategories() {
+    // hide empty categories
+    document.querySelectorAll(`[id^="cat-"]`).forEach((category) => {
+        if (category.querySelectorAll("x-item").length == 0) {
+            let category_title = category.querySelector("h2").innerHTML;
+            categorySection.removeChild(category);
+
+            let deleteCategorySpan = document.createElement("span");
+            deleteCategorySpan.style.display = "flex";
+            deleteCategorySpan.style.gap = "1rem";
+            deleteCategorySpan.style.margin = ".25rem 0";
+
+            let deleteCategoryText = document.createElement("p");
+            deleteCategoryText.innerHTML = `${category_title}`;
+
+            let deleteCategoryLink = document.createElement("a");
+            deleteCategoryLink.innerHTML = "Delete";
+            deleteCategoryLink.style.textDecoration = "underline";
+            deleteCategoryLink.onclick = () => deleteCategory(category);
+
+            deleteCategorySpan.appendChild(deleteCategoryText);
+
+            // add delete link next to category title
+            // only add if category is truly empty (no hidden items)
+            let noHiddenItemsInCategory = true
+            hiddenItems.querySelectorAll("x-item").forEach((item) => {
+                if (item.categoryID == category.id.slice("cat-".length)) {
+                    noHiddenItemsInCategory = false;
+                }
+            });
+
+            if (noHiddenItemsInCategory) {
+                deleteCategorySpan.appendChild(deleteCategoryLink);
+            }
+
+            emptyCategorySection.appendChild(deleteCategorySpan);
+
+            // hide link to empty category in table of contents
+            document.querySelectorAll("a.toc-link").forEach((link) => {
+                if (link.innerHTML == category_title) {
+                    link.style.display = "none";
+                }
+            });
+
+            console.log(`[HIDING EMPTY CATEGORY: ${category_title}]`);
+        }
+    });
 }
 
 function filterItemsByStatus(type) {
@@ -407,7 +646,44 @@ function filterItemsByStatus(type) {
             // if no items match, set category display = none
             category.style.display = matchingItems.length > 0 ? "" : "none";
         }
+
+        // hide empty categories
     });
+
+    hideEmptyCategories();
+}
+
+function formSubmit(form) {
+    form_is_valid = true;
+
+    let fields = Object.values(
+        form.firstElementChild.querySelectorAll("input, select")
+    ).reduce((obj, field) => {
+        // parse input values into an object
+
+        if (field.value == "-1") {
+            alert("Field cannot be empty.");
+            form_is_valid = false;
+            return;
+        }
+
+        if (/^\d+$/.test(field.value)) {
+            // if value is a number, parse as integer
+            obj[field.name] = parseInt(field.value);
+        } else {
+            obj[field.name] = field.value;
+        }
+
+        obj["removed"] = false;
+
+        return obj;
+    }, {});
+
+    if (!form_is_valid) {
+        return;
+    }
+
+    postChange(form.action, fields, true)
 }
 
 function scrollToCategory(categoryID) {
@@ -420,12 +696,49 @@ function scrollToTop() {
     window.scrollTo(0, 0);
 }
 
+function toggleAddSection(selected) {
+    // toggle the selected section of the add panel
+    selected.checked = true;
+
+    let fieldset = selected.parentNode.nextElementSibling.firstElementChild;
+
+    addCategory.parentNode.nextElementSibling.firstElementChild.disabled = selected != addCategory;
+    addItem.parentNode.nextElementSibling.firstElementChild.disabled = selected != addItem;
+
+    fieldset.querySelector("input[name='title']").focus();
+}
+
+function updateUnsavedChangesMsg() {
+    if (changedItems.length > 0) {
+        unsavedChangesMsg.style.display = "block";
+        return;
+    }
+
+    unsavedChangesMsg.style.display = "none";
+}
+
+const addPanel = document.getElementById("add-panel");
+const addCategory = document.getElementById("add-category");
+const addItem = document.getElementById("add-item");
+const unsavedChangesMsg = document.getElementById("unsaved-changes-msg");
+const categorySection = document.getElementById("categories");
+const emptyCategorySection = document.getElementById("empty-categories");
 const hiddenItems = document.getElementById("hidden-items");
 const historyPanel = document.getElementById("history-panel");
 const historyBody = document.getElementById("history-body");
 const historyHeader = document.getElementById("history-header");
 const filterStatus = document.getElementById("filter-status");
 const filterCurrent = document.getElementById("filter-current");
+const forms = document.querySelectorAll("form");
+
+let changedItems = [];
+
+for (const form of forms) {
+    form.addEventListener("submit", (e) => {
+        e.preventDefault();
+        formSubmit(form);
+    });
+}
 
 // define custom x-item HTMLElement
 const categories = Array.from(document.querySelectorAll('[id^="cat-"]'));
@@ -433,10 +746,41 @@ const items = Array.from(document.getElementsByTagName("x-item"));
 window.customElements.define("x-item", Item);
 
 // call function to save the changes
-document.getElementById("save-changes").onclick = saveChanges;
+document.getElementById("link-save").onclick = saveChanges;
 
 // hide/unhide filter-nav
 document.getElementById("filter-widget").onmouseover = () => document.getElementById("filter-nav").classList.add("active");
 document.getElementById("filter-widget").onmouseout = () => document.getElementById("filter-nav").classList.remove("active");
 document.getElementById("filter-nav").onmouseover = () => document.getElementById("filter-nav").classList.add("active");
 document.getElementById("filter-nav").onmouseout = () => document.getElementById("filter-nav").classList.remove("active");
+
+addCategory.onclick = () => toggleAddSection(addCategory);
+addCategory.nextElementSibling.onclick = () => toggleAddSection(addCategory);
+
+addItem.onclick = () => toggleAddSection(addItem);
+addItem.nextElementSibling.onclick = () => toggleAddSection(addItem);
+
+window.onload = () => {
+    hideEmptyCategories()
+
+    // reset input and select fields
+    document.querySelectorAll("input").forEach((input) => { input.value = "" });
+    document.querySelectorAll("select").forEach((select) => { select.value = "-1" });
+
+    // hide hidden items section there are no hidden items or empty categories
+    if (
+        hiddenItems.querySelectorAll("x-item").length == 0
+        && emptyCategorySection.querySelectorAll("x-category").length == 0) {
+        hiddenItems.style.display = "none";
+    }
+};
+
+window.addEventListener("input", (e) => {
+    updateUnsavedChangesMsg();
+});
+
+window.addEventListener("click", (e) => {
+    if (e.target.classList.contains("status-dot")) {
+        updateUnsavedChangesMsg();
+    }
+});
