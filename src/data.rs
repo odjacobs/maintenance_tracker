@@ -2,7 +2,7 @@
 
 pub mod constants {
     pub const APP_TITLE: &str = "Maintenance Tracker";
-    pub const APP_VERSION: &str = "0.1.0";
+    pub const APP_VERSION: &str = "1.0.0";
     pub const CONFIG_FILE: &str = "config.json";
     pub const CREDENTIALS_FILE: &str = "credentials.json";
     pub const CREDENTIALS_INVALID_MSG: &str = "ERROR: Invalid login credentials, please try again.";
