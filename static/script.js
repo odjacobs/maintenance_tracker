@@ -412,8 +412,6 @@ class Item extends HTMLElement {
     }
 
     updateChanged() {
-        console.log(this.repairCost);
-
         if (
             this.status == this.LAST_STATUS
             && this.repairCost == this.LAST_REPAIR_COST / 100
