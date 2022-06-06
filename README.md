@@ -62,7 +62,7 @@ The Options link, when clicked, will display other links including History, Hide
 ![History](../media/history.jpg)
 
 # Adding Items and Categories
-To add a new category (*ex. "Vehicles"*), click `Add` > `New Category`, enter the category title, and click the "Add" button. To add an item, you must also choose a category to occupy that item (*ex. "Car" goes in the "Vehicle" category*).
+To add a new category (*ex. "Vehicles"*), click `Add` > `New Category`, enter the category title, and click the "Add" button. To add an item, you must also choose a category to occupy that item (*ex. "Car" goes in the "Vehicles" category*).
 
 ![Add Category](../media/add_category.jpg)
 ![Add Item](../media/add_item.jpg)
