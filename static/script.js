@@ -240,7 +240,7 @@ class Item extends HTMLElement {
             this.updateChanged()
         };
 
-        this.repairCostInput.value = parseFloat(parseInt(this.repairCost) / 100).toFixed(2);
+        this.repairCostInput.value = parseFloat(parseInt(this.repairCost)).toFixed(2);
         Object.assign(this.repairCostInput.style, costInputStyle);
 
         // maintenance notes
@@ -493,7 +493,7 @@ function parseDollarCents(value) {
 
     cents = cents == undefined ? "00" : cents.padEnd(2, "0").slice(0, 2);
 
-    return `${parseInt(dollars + cents)}`
+    return `${dollars}.${cents}`
 }
 
 function postChange(action, content, autoReload) {
