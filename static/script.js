@@ -30,7 +30,7 @@ class Item extends HTMLElement {
         this.id = this.getAttribute("id");
         this.categoryID = this.getAttribute("categoryID");
         this.category = document.getElementById("cat-" + this.categoryID);
-        this.note = this.innerHTML || "";
+        this.note = this.innerHTML.trim() || "";
 
         this.repairCost = this.getAttribute("cost") || "0.00";
 
@@ -39,7 +39,7 @@ class Item extends HTMLElement {
         this.removed = this.getAttribute("removed") || "false";
 
         // constants
-        this.LAST_NOTE = this.innerHTML;
+        this.LAST_NOTE = this.innerHTML.trim();
         this.LAST_REPAIR_COST = this.repairCost;
         this.LAST_STATUS = this.status;
 
@@ -203,6 +203,7 @@ class Item extends HTMLElement {
 
         // item status indicator dot
         const statusDot = itemDetails.appendChild(document.createElement("span"));
+        statusDot.classList.add("status-dot")
         statusDot.onclick = (o) => this.nextStatusDotColor(o);
         Object.assign(statusDot.style, statusDotStyle);
         this.setStatusDotColor(statusDot);
@@ -219,45 +220,28 @@ class Item extends HTMLElement {
         Object.assign(lblRepairCost.style, lblRepairCostStyle);
 
         // input for this.repairCost
-        const repairCostInput = costDetails.appendChild(
+        this.repairCostInput = costDetails.appendChild(
             document.createElement("input")
         );
 
-        // TODO (maybe): Improve input filtering.
-        repairCostInput.onkeydown = (e) => {
-            /**
-             * This input filter is very basic, and only blocks
-             * alpha characters and symbols. I don't expect it
-             * to become necessary to expand on this, but I'm
-             * leaving a TODO here just in case. - @piccoloser
-             */
-
-            let input = e.key;
-
+        this.repairCostInput.onkeydown = (e) => {
+            // only allow numerical input and editing keys
             if (
-                input >= "0" && input <= "9"
-                || input == "Backspace"
-                || input == "Delete"
-                || input == "ArrowLeft"
-                || input == "ArrowRight"
-                || input == "Enter"
-                || input == "Escape"
-                || input == "Tab"
-                || input == "."
-                || e.ctrlKey && input == "a"
-            ) return true;
-
-            // block everything else
-            e.preventDefault();
-            return false;
+                e.key.length == 1
+                && /[-a-z!@#$%^&*()\[\]\\\/]/i
+                    .test(e.key)
+                && !e.ctrlKey
+            ) e.preventDefault();
         };
 
-        repairCostInput.type = "number";
-        repairCostInput.step = 10;
-        repairCostInput.min = 0;
-        repairCostInput.value = parseFloat(parseInt(this.repairCost) / 100).toFixed(2);
-        repairCostInput.oninput = () => this.setRepairCost(repairCostInput);
-        Object.assign(repairCostInput.style, costInputStyle);
+        this.repairCostInput.oninput = () => {
+            // set repair cost to input value and update changed status
+            this.repairCost = this.repairCostInput.value;
+            this.updateChanged()
+        };
+
+        this.repairCostInput.value = parseFloat(parseInt(this.repairCost) / 100).toFixed(2);
+        Object.assign(this.repairCostInput.style, costInputStyle);
 
         // maintenance notes
         const note = this.wrapper.appendChild(document.createElement("textarea"));
@@ -295,8 +279,8 @@ class Item extends HTMLElement {
                 "category_id": parseInt(this.categoryID),
                 "details": {
                     "status": parseInt(this.status),
-                    "cost": parseDollarCents(this.repairCost),
-                    "note": this.noteContent,
+                    "cost": parseInt(parseDollarCents(this.repairCost)),
+                    "note": this.note,
                     "visible": this.visible == "true" ? true : false,
                     "removed": this.removed == "true" ? true : false,
                 },
@@ -304,17 +288,14 @@ class Item extends HTMLElement {
         }
 
         catch (e) {
-            console.log(e);
-            alert(`Please double check field inputs for item ${this.title}`);
-
-            // throw new Error();
-            return;
+            alert(`Error parsing item ${this.title}: ${e}`);
+            throw e;
         }
     }
 
     setCategory(categoryID) {
         this.categoryID = categoryID;
-        postChange("update/item", this.getMap())
+        postChange("update/item", this.getMap(), false);
     }
 
     setDisplay(value) {
@@ -341,7 +322,9 @@ class Item extends HTMLElement {
         intStatus %= 3;
 
         this.status = `${intStatus}`;
-        this.changed = true;
+        this.updateChanged();
+        updateUnsavedChangesMsg();
+
         this.setStatusDotColor(statusDot);
     }
 
@@ -357,7 +340,8 @@ class Item extends HTMLElement {
         }
 
         // set removed flag to true
-        postChange("delete/item", parseInt(this.id));
+        this.style.display = "none";
+        postChange("delete/item", parseInt(this.id), false);
     }
 
     setHideLink(value) {
@@ -371,13 +355,8 @@ class Item extends HTMLElement {
     }
 
     setNoteContent(textareaElement) {
-        this.noteContent = textareaElement.value;
-        this.changed = true;
-    }
-
-    setRepairCost(inputElement) {
-        this.repairCost = inputElement.value;
-        this.changed = true;
+        this.note = textareaElement.value;
+        this.updateChanged();
     }
 
     setStatusDotColor(statusDot) {
@@ -411,12 +390,13 @@ class Item extends HTMLElement {
 
     setVisible(value) {
         this.visible = `${value}`;
-        this.changed = true;
 
         if (!value) {
             this.category.removeChild(this);
             hiddenItems.appendChild(this);
             Object.assign(this.categorySelect.style, this.categorySelectHiddenStyle);
+
+            hiddenItems.style.display = "block";
         }
         else {
             hiddenItems.removeChild(this);
@@ -427,40 +407,35 @@ class Item extends HTMLElement {
         this.setHideLink(value);
         this.setRemoveLink(value);
 
-        postChange("update/item", this.getMap());
+        postChange("update/item", this.getMap(), false);
+        changedItems.splice(changedItems.indexOf(this), 1);
     }
-}
 
-function collectChanges() {
-    // get all changed items and return them in Object form
-    let changedItems = [];
-    items.forEach((item) => {
-        if (item.changed) {
-            try {
-                changedItems.push(item.getMap());
+    updateChanged() {
+        console.log(this.repairCost);
+
+        if (
+            this.status == this.LAST_STATUS
+            && this.repairCost == this.LAST_REPAIR_COST / 100
+            && this.note == this.LAST_NOTE
+        ) {
+            this.changed = false;
+            changedItems.splice(changedItems.indexOf(this), 1);
+        } else {
+            if (!this.changed) {
+                this.changed = true;
+                changedItems.push(this);
             }
-            catch (e) { console.log(e); }
-
-            // update display for all items
-            item.setDisplay(item.status == filterStatus.name);
         }
-    });
-
-    return changedItems;
+    }
 }
 
 function deleteCategory(category) {
     // set category to removed in database
     let categoryID = parseInt(category.id.slice("cat-".length));
 
-    postChange("/delete/category", categoryID);
-}
-
-function deleteItem(item) {
-    // set item to removed in database
-    let itemID = parseInt(item.id);
-
-    postChange("/delete/item", itemID);
+    document.getElementById(`cat-${categoryID}`).style.display = "none";
+    postChange("/delete/category", categoryID, false);
 }
 
 function displayAddPanel() {
@@ -510,7 +485,7 @@ function logReload(xhr) {
 }
 
 function parseDollarCents(value) {
-    if (!value) return 0;
+    if (value == "") return "0.00";
 
     let [dollars, cents] = value.split(".");
 
@@ -520,10 +495,10 @@ function parseDollarCents(value) {
 
     cents = cents == undefined ? "00" : cents.padEnd(2, "0").slice(0, 2);
 
-    return parseInt(dollars + cents)
+    return `${parseInt(dollars + cents)}`
 }
 
-function postChange(action, content) {
+function postChange(action, content, autoReload) {
     // send changes to server
     let xhr = new XMLHttpRequest();
     xhr.open("POST", action);
@@ -532,24 +507,36 @@ function postChange(action, content) {
 
     // log response to the console
     xhr.onload = () => {
-        logReload(xhr, false);
+        if (!autoReload) {
+            // check for unsaved changes
+            if (changedItems.length > 0) {
+                updateUnsavedChangesMsg();
+            } else {
+                logReload(xhr, false);
+            }
+        }
+
+        else {
+            logReload(xhr, false);
+        }
     };
 
     xhr.send(JSON.stringify(content));
 }
 
 function saveChanges() {
-    try {
-        // get changes as an array of Objects
-        let changedItems = collectChanges();
+    // send data to backend via POST request
+    let changes = [];
 
-        // send data to backend via POST request
-        postChange("/", changedItems);
+    try {
+        changes = changedItems.map((item) => item.getMap());
     }
+
     catch (e) {
-        alert(e.message);
         return;
     }
+
+    postChange("/", changes, true);
 }
 
 function hideEmptyCategories() {
@@ -698,7 +685,7 @@ function formSubmit(form) {
         return;
     }
 
-    postChange(form.action, fields)
+    postChange(form.action, fields, true)
 }
 
 function scrollToCategory(categoryID) {
@@ -717,9 +704,19 @@ function toggleAddSection(selected) {
     addItem.parentNode.nextElementSibling.firstElementChild.disabled = selected != addItem;
 }
 
+function updateUnsavedChangesMsg() {
+    if (changedItems.length > 0) {
+        unsavedChangesMsg.style.display = "block";
+        return;
+    }
+
+    unsavedChangesMsg.style.display = "none";
+}
+
 const addPanel = document.getElementById("add-panel");
 const addCategory = document.getElementById("add-category");
 const addItem = document.getElementById("add-item");
+const unsavedChangesMsg = document.getElementById("unsaved-changes-msg");
 const categorySection = document.getElementById("categories");
 const emptyCategorySection = document.getElementById("empty-categories");
 const hiddenItems = document.getElementById("hidden-items");
@@ -729,6 +726,8 @@ const historyHeader = document.getElementById("history-header");
 const filterStatus = document.getElementById("filter-status");
 const filterCurrent = document.getElementById("filter-current");
 const forms = document.querySelectorAll("form");
+
+let changedItems = [];
 
 for (const form of forms) {
     form.addEventListener("submit", (e) => {
@@ -768,3 +767,13 @@ window.onload = () => {
         hiddenItems.style.display = "none";
     }
 };
+
+window.addEventListener("input", (e) => {
+    updateUnsavedChangesMsg();
+});
+
+window.addEventListener("click", (e) => {
+    if (e.target.classList.contains("status-dot")) {
+        updateUnsavedChangesMsg();
+    }
+});

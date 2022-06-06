@@ -296,6 +296,21 @@ x-item:nth-child(odd) {
     background-color: var(--gray-light);
 }
 
+#unsaved-changes-msg {
+    display: none;
+
+    position: fixed;
+    z-index: 3;
+    top: 3.5rem;
+    right: 1.2rem;
+
+    padding: 2px 4px;
+
+    font-size: .8rem;
+
+    background: #000;
+}
+
 #version {
     font-size: .9rem;
     transform: translateY(50%);
